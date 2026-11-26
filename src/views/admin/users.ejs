@@ -7,7 +7,7 @@
     <div class="col-md-2"><input name="username" class="form-control form-control-sm" placeholder="username" required autocapitalize="none"></div>
     <div class="col-md-3"><input name="nama" class="form-control form-control-sm" placeholder="Nama lengkap" required></div>
     <div class="col-md-2"><input name="noWa" class="form-control form-control-sm" placeholder="No. WA"></div>
-    <div class="col-md-3"><input name="password" type="password" minlength="10" class="form-control form-control-sm" placeholder="Password awal (min 10)" required autocomplete="new-password"></div>
+    <div class="col-md-3"><input name="password" type="password" minlength="6" class="form-control form-control-sm" placeholder="Password awal (min 6)" required autocomplete="new-password"></div>
     <div class="col-md-2"><button class="btn btn-sm btn-brand w-100">Buat akun</button></div>
     <div class="col-12 small">Role: <% roles.forEach(r => { %><label class="ms-2"><input type="checkbox" name="roles" value="<%= r.id %>"> <%= r.nama %></label><% }) %></div>
     <div class="col-12 small">Rumah (untuk akun warga): <select name="rumah" multiple class="form-select form-select-sm d-inline-block" style="width:auto;height:4.5em"><% rumah.forEach(x => { %><option value="<%= x.id %>"><%= x.kode %></option><% }) %></select></div>

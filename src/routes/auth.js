@@ -50,7 +50,7 @@ r.post('/logout', (req, res) => {
 
 r.get('/akun/password', requireLogin, (req, res) => res.render('auth/password', { title: 'Ganti password' }));
 r.post('/akun/password', requireLogin, async (req, res) => {
-  const body = z.object({ lama: z.string(), baru: z.string().min(10, 'Password baru minimal 10 karakter'), ulang: z.string() }).parse(req.body);
+  const body = z.object({ lama: z.string(), baru: z.string().min(6, 'Password baru minimal 6 karakter'), ulang: z.string() }).parse(req.body);
   if (body.baru !== body.ulang) { req.flash('danger', 'Konfirmasi password tidak sama.'); return res.redirect('/akun/password'); }
   const user = await prisma.user.findUnique({ where: { id: req.user.id } });
   if (!(await password.verify(user.passwordHash, body.lama))) { req.flash('danger', 'Password lama salah.'); return res.redirect('/akun/password'); }

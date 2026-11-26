@@ -35,7 +35,7 @@ function rumahDariForm(body) { return [].concat(body.rumah || []).map(Number).fi
 
 r.post('/users', requirePerm('user.kelola'), async (req, res) => {
   const b = userSchema.parse(req.body);
-  if (!password.validateStrength(b.password)) throw new AppError('Password minimal 10 karakter.');
+  if (!password.validateStrength(b.password)) throw new AppError('Password minimal 6 karakter.');
   const roleIds = rolesDariForm(req.body);
   const u = await prisma.user.create({
     data: {
@@ -58,7 +58,7 @@ r.post('/users/:id', requirePerm('user.kelola'), async (req, res) => {
   const data = { nama: b.nama, noWa: normWa(b.noWa) };
   if (!target.isSuperAdmin) data.aktif = req.body.aktif === 'on';
   if (b.password) {
-    if (!password.validateStrength(b.password)) throw new AppError('Password minimal 10 karakter.');
+    if (!password.validateStrength(b.password)) throw new AppError('Password minimal 6 karakter.');
     data.passwordHash = await password.hash(b.password);
   }
   const roleIds = rolesDariForm(req.body);

@@ -40,7 +40,7 @@ async function main() {
     const u = process.env.SUPERADMIN_USERNAME;
     const pw = process.env.SUPERADMIN_PASSWORD;
     if (!u || !pw) { console.warn('SUPERADMIN_USERNAME/SUPERADMIN_PASSWORD belum diset — Super Admin tidak dibuat.'); }
-    else if (!password.validateStrength(pw)) { throw new Error('SUPERADMIN_PASSWORD minimal 10 karakter'); }
+    else if (!password.validateStrength(pw)) { throw new Error('SUPERADMIN_PASSWORD minimal 6 karakter'); }
     else {
       await prisma.user.create({ data: { username: u.toLowerCase(), nama: process.env.SUPERADMIN_NAMA || 'Super Admin', passwordHash: await password.hash(pw), isSuperAdmin: true } });
       console.log(`Super Admin "${u}" dibuat. Hapus SUPERADMIN_PASSWORD dari .env setelah login pertama.`);
