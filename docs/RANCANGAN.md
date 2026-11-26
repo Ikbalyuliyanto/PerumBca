@@ -120,3 +120,9 @@ Argon2id; session di Postgres (`connect-pg-simple`) dengan cookie HttpOnly+Secur
 8. Pengingat: tanggal kirim tagihan dan jadwal pengingat (mis. tgl 1, 10, 20).
 9. Domain / subdomain dan perangkat Armbian target.
 10. Nomor WhatsApp pengirim (akun Baileys khusus).
+
+## 7. Keputusan yang sudah diambil (2026-11-26)
+- **Iuran dibayar sekaligus Rp50.000/bulan.** Sistem membagi otomatis ke komponen (pembangunan, kas, sampah) sesuai rincian tagihan.
+  Bendahara **boleh mengubah alokasi** saat input pembayaran, misalnya hanya komponen kebersihan dulu. Perubahan ini tercatat di audit log; sisa komponen tetap menjadi tunggakan.
+  Urutan default: tagihan tertua dulu (FIFO), lalu di dalam satu tagihan semua komponen dilunasi penuh.
+- **Penomoran rumah tanpa angka 13 itu resmi** (B12A, C12A, D12A; alasan fengsui). Nomor rumah disimpan sebagai teks, bukan angka.

@@ -6,3 +6,4 @@ uploads/
 backups/
 wa-auth/
 *.log
+data/import/
