@@ -9,54 +9,58 @@
   <link rel="stylesheet" href="/vendor/icons/bootstrap-icons.min.css">
   <link rel="stylesheet" href="/static/css/app.css">
 </head>
-<body>
 <% const staffNav = locals.user && locals.isStaff; %>
-<nav class="navbar navbar-expand-lg navbar-dark bg-brand sticky-top">
-  <div class="container-fluid">
-    <a class="navbar-brand fw-semibold" href="/"><i class="bi bi-house-heart"></i> BCA</a>
-    <% if (staffNav) { %>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-label="Menu"><span class="navbar-toggler-icon"></span></button>
-    <div class="collapse navbar-collapse" id="nav">
-      <ul class="navbar-nav me-auto">
-        <% const nav = [
-          ['dashboard.lihat','/admin','Dashboard'],
-          ['rumah.lihat','/admin/rumah','Rumah'],
-          ['tagihan.lihat','/admin/tagihan','Tagihan'],
-          ['pembayaran.lihat','/admin/pembayaran','Pembayaran'],
-          ['pengeluaran.lihat','/admin/pengeluaran','Pengeluaran'],
-          ['ledger.lihat','/admin/ledger','Buku kas'],
-          ['laporan.lihat','/admin/laporan','Laporan'],
-        ]; %>
-        <% nav.forEach(([p, href, label]) => { if (can(p)) { %>
-          <li class="nav-item"><a class="nav-link <%= (href === '/admin' ? path === '/admin' || path === '/admin/' : path.startsWith(href)) ? 'active' : '' %>" href="<%= href %>"><%= label %></a></li>
-        <% } }) %>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Lainnya</a>
-          <ul class="dropdown-menu">
-            <% if (can('kebijakan.lihat')) { %><li><a class="dropdown-item" href="/admin/kebijakan">Kebijakan iuran</a></li><% } %>
-            <% if (can('pengajuan.putuskan')) { %><li><a class="dropdown-item" href="/admin/pengajuan">Pengajuan warga</a></li><% } %>
-            <% if (can('impor.kelola')) { %><li><a class="dropdown-item" href="/admin/impor">Impor &amp; verifikasi</a></li><% } %>
-            <% if (can('wa.kelola')) { %><li><a class="dropdown-item" href="/admin/wa">WhatsApp</a></li><% } %>
-            <% if (can('user.kelola')) { %><li><a class="dropdown-item" href="/admin/users">Akun pengguna</a></li><% } %>
-            <% if (user.isSuperAdmin) { %>
-              <li><a class="dropdown-item" href="/admin/roles">Role &amp; hak akses</a></li>
-              <li><a class="dropdown-item" href="/admin/pengaturan">Pengaturan</a></li>
-            <% } %>
-            <% if (can('audit.lihat')) { %><li><a class="dropdown-item" href="/admin/audit">Audit log</a></li><% } %>
-          </ul>
-        </li>
-      </ul>
-      <% } %>
-      <% if (locals.user) { %>
-      <div class="d-flex align-items-center gap-2 text-white small <%= staffNav ? '' : 'ms-auto' %>">
-        <a class="text-white text-decoration-none" href="/akun/password" title="Ganti password"><i class="bi bi-person-circle"></i> <%= user.nama %><% if (user.isSuperAdmin) { %> <span class="badge text-bg-warning">Super Admin</span><% } %></a>
-        <form method="post" action="/logout" class="m-0"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-outline-light">Keluar</button></form>
-      </div>
-      <% } %>
-    <% if (staffNav) { %></div><% } %>
-  </div>
-</nav>
-<main class="container-xl py-3">
-<% if (locals.flash) { %>
-  <div class="alert alert-<%= flash.type %> alert-dismissible fade show" role="alert"><%= flash.msg %><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+<body class="<%= staffNav ? 'has-sidebar' : 'no-sidebar' %>">
+<% if (staffNav) { %>
+<aside class="sidebar" id="sidebar">
+  <a class="brand" href="/admin"><span class="brand-logo"><i class="bi bi-house-heart-fill"></i></span><span>Iuran BCA</span></a>
+  <% const isOn = (href) => href === '/admin' ? (path === '/admin' || path === '/admin/') : path.startsWith(href); %>
+  <% const menu = [
+    ['MENU', null],
+    ['dashboard.lihat', '/admin', 'bi-grid-1x2', 'Dashboard'],
+    ['pembayaran.input', '/admin/bayar', 'bi-cash-coin', 'Bayar Iuran'],
+    ['rumah.lihat', '/admin/rumah', 'bi-people', 'Data Warga'],
+    ['kebijakan.lihat', '/admin/jenis-iuran', 'bi-tags', 'Jenis Iuran'],
+    ['KEUANGAN', null],
+    ['pengeluaran.lihat', '/admin/pengeluaran', 'bi-wallet2', 'Pengeluaran'],
+    ['ledger.lihat', '/admin/ledger', 'bi-journal-text', 'Buku Kas'],
+    ['laporan.lihat', '/admin/laporan', 'bi-bar-chart', 'Laporan'],
+    ['LAINNYA', null],
+    ['pembayaran.lihat', '/admin/pembayaran', 'bi-receipt', 'Riwayat Bayar'],
+    ['tagihan.lihat', '/admin/tagihan', 'bi-file-earmark-text', 'Tagihan'],
+    ['pengajuan.putuskan', '/admin/pengajuan', 'bi-inbox', 'Pengajuan Warga'],
+    ['impor.kelola', '/admin/impor', 'bi-upload', 'Impor & Verifikasi'],
+    ['wa.kelola', '/admin/wa', 'bi-whatsapp', 'WhatsApp'],
+    ['user.kelola', '/admin/users', 'bi-person-gear', 'Akun'],
+    ['*super', '/admin/roles', 'bi-shield-lock', 'Hak Akses'],
+    ['*super', '/admin/pengaturan', 'bi-gear', 'Pengaturan'],
+    ['audit.lihat', '/admin/audit', 'bi-clock-history', 'Audit Log'],
+  ]; %>
+  <nav class="side-nav">
+  <% menu.forEach(m => { if (m[1] === null) { %><div class="side-label"><%= m[0] %></div><% return; }
+     const ok = m[0] === '*super' ? user.isSuperAdmin : can(m[0]); if (!ok) return; %>
+    <a href="<%= m[1] %>" class="<%= isOn(m[1]) ? 'active' : '' %>"><i class="bi <%= m[2] %>"></i><span><%= m[3] %></span></a>
+  <% }) %>
+  </nav>
+</aside>
+<div class="sidebar-backdrop" data-toggle-sidebar></div>
 <% } %>
+<div class="main">
+  <header class="topbar">
+    <% if (staffNav) { %><button class="btn btn-icon d-lg-none" data-toggle-sidebar aria-label="Menu"><i class="bi bi-list"></i></button><% } else { %><a class="brand brand-plain" href="/"><span class="brand-logo"><i class="bi bi-house-heart-fill"></i></span><span>Iuran BCA</span></a><% } %>
+    <div class="topbar-title"><%= title %></div>
+    <% if (locals.user) { %>
+    <div class="dropdown ms-auto">
+      <button class="btn user-chip" data-bs-toggle="dropdown"><span class="avatar"><%= user.nama.slice(0,1).toUpperCase() %></span><span class="d-none d-sm-inline"><%= user.nama %></span><i class="bi bi-chevron-down small"></i></button>
+      <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+        <% if (user.isSuperAdmin) { %><li><span class="dropdown-item-text small text-warning-emphasis">Super Admin</span></li><% } %>
+        <li><a class="dropdown-item" href="/akun/password"><i class="bi bi-key me-2"></i>Ganti password</a></li>
+        <li><form method="post" action="/logout" class="m-0"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Keluar</button></form></li>
+      </ul>
+    </div>
+    <% } %>
+  </header>
+  <main class="content">
+  <% if (locals.flash) { %>
+    <div class="alert alert-<%= flash.type %> alert-dismissible fade show" role="alert"><%= flash.msg %><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+  <% } %>

@@ -49,6 +49,11 @@
   if (addRow) addRow.addEventListener('click', function () {
     var tpl = document.getElementById('komponen-tpl');
     document.getElementById('komponen-body').appendChild(tpl.content.cloneNode(true));
+    var body = document.getElementById('komponen-body');
+    var rows = body.querySelectorAll('tr');
+    var cb = rows[rows.length - 1].querySelector('input[name="aktif"]');
+    if (cb && cb.value === 'NEW') cb.value = String(rows.length - 1);
+    rows[rows.length - 1].querySelectorAll('input[data-money]').forEach(function (el) { el.addEventListener('input', function () { var d = el.value.replace(/D/g, ''); el.value = d ? Number(d).toLocaleString('id-ID') : ''; }); });
   });
   // Kode komponen → nilai checkbox aktif ikut kode
   document.addEventListener('input', function (e) {
@@ -82,4 +87,40 @@
       })
       .catch(function (e) { alert(e.message); payBtn.disabled = false; });
   });
+})();
+
+// Sidebar mobile
+(function () {
+  document.querySelectorAll('[data-toggle-sidebar]').forEach(function (b) {
+    b.addEventListener('click', function () { document.body.classList.toggle('sidebar-open'); });
+  });
+})();
+
+// Halaman centang iuran: hitung total & tombol centang baris/kolom/semua
+(function () {
+  var form = document.getElementById('pay-form');
+  if (!form) return;
+  var boxes = form.querySelectorAll('input[name="p"]');
+  var out = document.getElementById('pay-total');
+  var cnt = document.getElementById('pay-count');
+  var btn = document.getElementById('pay-submit');
+  function hitung() {
+    var t = 0, n = 0;
+    boxes.forEach(function (b) { if (b.checked) { t += Number(b.dataset.nominal || 0); n++; } });
+    out.textContent = 'Rp' + t.toLocaleString('id-ID');
+    cnt.textContent = n + ' iuran dipilih';
+    btn.disabled = n === 0;
+  }
+  function toggle(sel) {
+    var list = form.querySelectorAll(sel);
+    var allOn = Array.prototype.every.call(list, function (b) { return b.checked; });
+    list.forEach(function (b) { b.checked = !allOn; });
+    hitung();
+  }
+  form.addEventListener('change', hitung);
+  form.querySelectorAll('[data-row]').forEach(function (b) { b.addEventListener('click', function () { toggle('input[data-periode="' + b.dataset.row + '"]'); }); });
+  form.querySelectorAll('[data-col]').forEach(function (b) { b.addEventListener('click', function () { toggle('input[data-kode="' + b.dataset.col + '"]'); }); });
+  var all = document.getElementById('pay-all');
+  if (all) all.addEventListener('click', function () { toggle('input[name="p"]'); });
+  hitung();
 })();

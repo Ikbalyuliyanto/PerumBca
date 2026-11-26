@@ -1,0 +1,40 @@
+<%- include('../partials/head') %>
+<div class="page-head">
+  <div><h1>Jenis Iuran</h1><div class="sub">Daftar iuran bulanan. Perubahan berlaku mulai bulan yang dipilih, sedangkan tagihan yang sudah dibuat tidak berubah.</div></div>
+</div>
+<% const k = keb ? keb.komponen : []; const edit = can('kebijakan.kelola'); %>
+<div class="card" style="max-width:860px">
+  <form method="post" action="/admin/jenis-iuran" data-confirm="Simpan jenis iuran?">
+    <%- include('../partials/csrf') %>
+    <div class="table-responsive">
+    <table class="table align-middle">
+      <thead><tr><th>Nama iuran</th><th>Nominal / bulan</th><th>Masuk ke dana</th><th class="text-center">Aktif</th></tr></thead>
+      <tbody id="komponen-body">
+      <% k.forEach((c, i) => { %>
+        <tr>
+          <td><input type="hidden" name="kode" value="<%= c.kode %>"><input name="nama" value="<%= c.nama %>" class="form-control" <%= edit ? '' : 'disabled' %> required></td>
+          <td><div class="input-group"><span class="input-group-text">Rp</span><input name="nominal" value="<%= c.nominal.toLocaleString('id-ID') %>" data-money class="form-control" <%= edit ? '' : 'disabled' %>></div></td>
+          <td><select name="dana" class="form-select" <%= edit ? '' : 'disabled' %>><% dana.forEach(d => { %><option value="<%= d.id %>" <%= d.id === c.danaId ? 'selected' : '' %>><%= d.nama %></option><% }) %></select></td>
+          <td class="text-center"><input type="checkbox" class="form-check-input" name="aktif" value="<%= i %>" <%= c.aktif ? 'checked' : '' %> <%= edit ? '' : 'disabled' %>></td>
+        </tr>
+      <% }) %>
+      </tbody>
+      <tfoot><tr><td class="fw-semibold">Total per bulan</td><td class="fw-bold money"><%= u.rupiah(k.filter(c => c.aktif).reduce((s, c) => s + c.nominal, 0)) %></td><td colspan="2"></td></tr></tfoot>
+    </table>
+    </div>
+    <% if (edit) { %>
+    <template id="komponen-tpl"><tr>
+      <td><input type="hidden" name="kode" value=""><input name="nama" class="form-control" placeholder="mis. Keamanan"></td>
+      <td><div class="input-group"><span class="input-group-text">Rp</span><input name="nominal" data-money class="form-control" value="0"></div></td>
+      <td><select name="dana" class="form-select"><% dana.forEach(d => { %><option value="<%= d.id %>"><%= d.nama %></option><% }) %></select></td>
+      <td class="text-center"><input type="checkbox" class="form-check-input" name="aktif" value="NEW" checked></td>
+    </tr></template>
+    <div class="sticky-bar">
+      <button type="button" id="add-komponen" class="btn btn-light"><i class="bi bi-plus-lg"></i> Tambah jenis iuran</button>
+      <div class="d-flex gap-2 align-items-center"><label class="small text-muted">Berlaku mulai</label><input type="month" name="mulai" value="<%= u.periodeNow() %>" class="form-control form-control-sm" style="width:auto"><button class="btn btn-brand"><i class="bi bi-save"></i> Simpan</button></div>
+    </div>
+    <% } %>
+  </form>
+</div>
+<p class="small text-muted mt-2">Dana tujuan bisa ditambah di <a href="/admin/kebijakan">riwayat kebijakan &amp; dana</a>.</p>
+<%- include('../partials/foot') %>

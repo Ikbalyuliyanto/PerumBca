@@ -36,6 +36,7 @@ r.get('/', requirePerm('dashboard.lihat'), async (req, res) => {
   });
 });
 
+r.use(require('./bayar'));
 r.use(require('./rumah'));
 r.use(require('./iuran'));
 r.use(require('./keuangan'));

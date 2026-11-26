@@ -1,0 +1,46 @@
+<%- include('../partials/head') %>
+<div class="page-head">
+  <div><a href="/admin/bayar" class="small text-muted"><i class="bi bi-arrow-left"></i> Bayar Iuran</a>
+    <h1>Rumah <%= rumah.kode %></h1><div class="sub"><%= rumah.penghunian[0]?.nama || 'Belum ada nama penghuni' %></div></div>
+  <div class="month-nav"><a href="?tahun=<%= tahun - 1 %>"><i class="bi bi-chevron-left"></i></a><span><%= tahun %></span><a href="?tahun=<%= tahun + 1 %>"><i class="bi bi-chevron-right"></i></a></div>
+</div>
+<div class="card">
+  <div class="card-head"><h2>Centang iuran yang dibayar</h2>
+    <button type="button" class="btn btn-sm btn-light" id="pay-all" form="pay-form"><i class="bi bi-check2-square"></i> Centang semua</button></div>
+  <form method="post" id="pay-form" data-confirm="Simpan pembayaran iuran yang dicentang?">
+    <%- include('../partials/csrf') %>
+    <input type="hidden" name="tahun" value="<%= tahun %>">
+    <div class="table-responsive">
+    <table class="table pay-grid align-middle">
+      <thead><tr><th>Bulan</th>
+        <% jenis.forEach(j => { %><th><button type="button" class="btn btn-link btn-sm p-0 text-reset fw-semibold text-decoration-none" data-col="<%= j.kode %>"><%= j.nama %></button></th><% }) %>
+        <th></th></tr></thead>
+      <tbody>
+      <% grid.forEach(g => { const adaBelum = jenis.some(j => g.sel[j.kode].st === 'BELUM'); %>
+        <tr><td class="fw-semibold"><%= u.periodeLabel(g.periode) %></td>
+          <% jenis.forEach(j => { const c = g.sel[j.kode]; %><td>
+            <% if (c.st === 'BELUM' && can('pembayaran.input')) { %>
+              <label class="chk"><input type="checkbox" name="p" value="<%= g.periode %>|<%= j.kode %>" data-periode="<%= g.periode %>" data-kode="<%= j.kode %>" data-nominal="<%= c.nominal %>"><span><%= u.rupiah(c.nominal) %></span></label>
+            <% } else if (c.st === 'LUNAS') { %><span class="cell-done LUNAS"><i class="bi bi-check-lg"></i> Lunas</span>
+            <% } else if (c.st === 'SHEET') { %><span class="cell-done SHEET" title="Tercatat lunas di sheet lama"><i class="bi bi-check-lg"></i> Sheet</span>
+            <% } else if (c.st === 'BEBAS') { %><span class="cell-done BEBAS">—</span>
+            <% } else { %><span class="pill pill-BELUM">Belum</span><% } %>
+          </td><% }) %>
+          <td><% if (adaBelum) { %><button type="button" class="btn btn-sm btn-light" data-row="<%= g.periode %>">semua</button><% } %></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+    </div>
+    <div class="sticky-bar">
+      <div><div class="total-big" id="pay-total">Rp0</div><div class="small text-muted" id="pay-count">0 iuran dipilih</div></div>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <input type="date" name="tanggal" class="form-control form-control-sm" value="<%= new Date().toISOString().slice(0,10) %>" style="width:auto">
+        <input name="catatan" class="form-control form-control-sm" placeholder="Catatan (opsional)" style="width:180px">
+        <button class="btn btn-brand" id="pay-submit" disabled><i class="bi bi-save"></i> Simpan pembayaran</button>
+      </div>
+    </div>
+  </form>
+</div>
+<p class="small text-muted mt-2"><span class="cell-done SHEET py-0">Sheet</span> = tercatat lunas di sheet 2026 (sebelum sistem), tidak masuk kas. <span class="text-muted">—</span> = tidak wajib (rumah kosong / tidak ditempati).</p>
+<%- include('../partials/foot') %>

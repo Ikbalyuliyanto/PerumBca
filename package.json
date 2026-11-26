@@ -13,7 +13,7 @@
     "migrate": "prisma migrate deploy",
     "seed": "node prisma/seed.js",
     "import:csv": "node src/modules/impor/cli.js",
-    "test": "node --test --test-concurrency=1 tests/keuangan.test.js tests/integrasi.test.js tests/http.test.js"
+    "test": "node --test --test-concurrency=1 tests/keuangan.test.js tests/integrasi.test.js tests/http.test.js tests/bayar.test.js"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",

@@ -1,0 +1,63 @@
+<%- include('../partials/head') %>
+<div class="page-head">
+  <div><h1>Bayar Iuran</h1><div class="sub">Klik <b>Bayar semua</b> bila warga membayar penuh, atau <b>Pilih</b> untuk bayar iuran tertentu saja.</div></div>
+  <div class="month-nav"><a href="?periode=<%= prev %>"><i class="bi bi-chevron-left"></i></a><span><%= u.periodeLabel(periode) %></span><a href="?periode=<%= next %>"><i class="bi bi-chevron-right"></i></a></div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-sm-4"><div class="card stat"><div class="ico ico-blue"><i class="bi bi-house"></i></div><div><div class="val"><%= ring.total %></div><div class="lbl">Rumah wajib bayar</div></div></div></div>
+  <div class="col-sm-4"><div class="card stat"><div class="ico ico-green"><i class="bi bi-check2-circle"></i></div><div><div class="val"><%= ring.lunas %> <small class="text-muted fs-6">/ <%= ring.total %></small></div><div class="lbl">Sudah lunas bulan ini</div></div></div></div>
+  <div class="col-sm-4"><div class="card stat"><div class="ico ico-red"><i class="bi bi-hourglass-split"></i></div><div><div class="val money"><%= u.rupiah(ring.sisa) %></div><div class="lbl">Belum terbayar bulan ini</div></div></div></div>
+</div>
+
+<div class="card">
+  <form method="get" class="card-head flex-wrap">
+    <input type="hidden" name="periode" value="<%= periode %>">
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="?periode=<%= periode %>" class="btn btn-sm <%= !query.f ? 'btn-brand' : 'btn-light' %>">Semua</a>
+      <a href="?periode=<%= periode %>&f=belum" class="btn btn-sm <%= query.f === 'belum' ? 'btn-brand' : 'btn-light' %>">Belum bayar</a>
+      <a href="?periode=<%= periode %>&f=lunas" class="btn btn-sm <%= query.f === 'lunas' ? 'btn-brand' : 'btn-light' %>">Lunas</a>
+    </div>
+    <div class="input-group input-group-sm" style="max-width:260px"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input name="q" value="<%= query.q || '' %>" class="form-control" placeholder="Cari rumah / nama"><% if (query.f) { %><input type="hidden" name="f" value="<%= query.f %>"><% } %></div>
+  </form>
+
+  <form method="post" action="/admin/bayar/semua" id="bulk-form" data-confirm="Tandai LUNAS semua jenis iuran <%= u.periodeLabel(periode) %> untuk rumah yang dicentang?">
+    <%- include('../partials/csrf') %>
+    <input type="hidden" name="periode" value="<%= periode %>">
+    <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead><tr>
+        <th style="width:36px"><input type="checkbox" class="form-check-input" data-check-all="rumah"></th>
+        <th>Rumah</th>
+        <% jenis.forEach(j => { %><th class="text-center d-none d-md-table-cell"><%= j.nama %><div class="fw-normal text-lowercase"><%= u.rupiah(j.nominal) %></div></th><% }) %>
+        <th class="text-end">Sisa</th><th class="text-end" style="width:210px">Aksi</th>
+      </tr></thead>
+      <tbody>
+      <% list.forEach(r => { const lunas = !r.bebas && r.sisa === 0; %>
+        <tr class="<%= r.bebas ? 'list-row-muted' : '' %>">
+          <td><% if (!r.bebas && !lunas && can('pembayaran.input')) { %><input type="checkbox" class="form-check-input" name="rumah" value="<%= r.id %>"><% } %></td>
+          <td><div class="house"><%= r.kode %></div><div class="small text-muted"><%= r.nama || '—' %><% if (r.kondisi !== 'AKTIF') { %> · <span class="badge kondisi-<%= r.kondisi %>"><%= r.kondisi.replace('_',' ').toLowerCase() %></span><% } %></div></td>
+          <% jenis.forEach(j => { %><td class="text-center d-none d-md-table-cell"><span class="pill pill-<%= r.per[j.kode] %>"><%= {LUNAS:'Lunas',BELUM:'Belum',SEBAGIAN:'Sebagian',BEBAS:'—'}[r.per[j.kode]] %></span></td><% }) %>
+          <td class="text-end money fw-semibold <%= r.sisa && !r.bebas ? 'text-danger' : 'text-success' %>"><%= r.bebas ? '—' : (r.sisa ? u.rupiah(r.sisa) : 'Lunas') %></td>
+          <td class="text-end text-nowrap">
+            <% if (!r.bebas && !lunas && can('pembayaran.input')) { %>
+              <button class="btn btn-sm btn-brand" name="rumah" value="<%= r.id %>" formaction="/admin/bayar/semua" form="one-<%= r.id %>"><i class="bi bi-check2-all"></i> Bayar semua</button>
+            <% } %>
+            <a class="btn btn-sm btn-light" href="/admin/bayar/<%= r.id %>">Pilih <i class="bi bi-chevron-right small"></i></a>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!list.length) { %><tr><td colspan="<%= jenis.length + 4 %>" class="text-center text-muted py-4">Tidak ada data.</td></tr><% } %>
+      </tbody>
+    </table>
+    </div>
+    <% if (can('pembayaran.input')) { %>
+    <div class="sticky-bar">
+      <div class="small text-muted">Centang beberapa rumah yang sudah membayar penuh, lalu simpan sekaligus.</div>
+      <div class="d-flex gap-2 align-items-center"><input type="date" name="tanggal" class="form-control form-control-sm" value="<%= new Date().toISOString().slice(0,10) %>" style="width:auto"><button class="btn btn-brand"><i class="bi bi-check2-all"></i> Lunaskan yang dicentang</button></div>
+    </div>
+    <% } %>
+  </form>
+  <% list.forEach(r => { %><form id="one-<%= r.id %>" method="post" action="/admin/bayar/semua" class="d-none" data-confirm="Bayar semua iuran <%= r.kode %> <%= u.periodeLabel(periode) %> (<%= u.rupiah(r.sisa) %>)?"><%- include('../partials/csrf') %><input type="hidden" name="periode" value="<%= periode %>"></form><% }) %>
+</div>
+<%- include('../partials/foot') %>

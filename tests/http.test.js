@@ -110,7 +110,7 @@ test('portal warga via link: tampil, link palsu 404, tidak bocor rumah lain', as
 test('semua halaman admin & warga ter-render tanpa error (Super Admin)', async () => {
   const c = new Client();
   await c.login('super', 'rahasia-sekali-123');
-  const pages = ['/admin', '/admin/rumah', `/admin/rumah/${D.a1.id}`, '/admin/rumah/baru', '/admin/pengajuan', '/admin/impor', '/admin/kebijakan', '/admin/kebijakan/baru',
+  const pages = ['/admin/bayar', '/admin/bayar?f=belum', `/admin/bayar/${D.a1.id}`, '/admin/jenis-iuran', '/admin', '/admin/rumah', `/admin/rumah/${D.a1.id}`, '/admin/rumah/baru', '/admin/pengajuan', '/admin/impor', '/admin/kebijakan', '/admin/kebijakan/baru',
     '/admin/tagihan', '/admin/tagihan?tunggakan=1', '/admin/pembayaran', '/admin/pembayaran/baru', `/admin/pembayaran/baru?rumah=${D.a1.id}`, '/admin/ledger', '/admin/pengeluaran',
     '/admin/laporan', '/admin/laporan?format=csv', '/admin/users', '/admin/roles', '/admin/audit', '/admin/wa', '/admin/pengaturan', '/akun/password', '/r/selesai'];
   for (const p of pages) {
