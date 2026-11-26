@@ -126,3 +126,9 @@ Argon2id; session di Postgres (`connect-pg-simple`) dengan cookie HttpOnly+Secur
   Bendahara **boleh mengubah alokasi** saat input pembayaran, misalnya hanya komponen kebersihan dulu. Perubahan ini tercatat di audit log; sisa komponen tetap menjadi tunggakan.
   Urutan default: tagihan tertua dulu (FIFO), lalu di dalam satu tagihan semua komponen dilunasi penuh.
 - **Penomoran rumah tanpa angka 13 itu resmi** (B12A, C12A, D12A; alasan fengsui). Nomor rumah disimpan sebagai teks, bukan angka.
+- **Arti centang di sheet 2026:** komponen *kebersihan/sampah* bulan itu sudah dibayar. Nominal sebenarnya tidak diketahui, dan komponen lain (pembangunan, kas) tidak tercatat di sheet.
+  Konsekuensi untuk impor (usulan default):
+  - Bulan sebelum pembukuan dimulai diimpor sebagai **riwayat** (status per bulan + sumber "sheet 2026"), **tanpa entri buku kas** dan tanpa nominal karangan. Uangnya dianggap sudah tercermin di saldo awal.
+  - Komponen pembangunan/kas untuk periode itu **tidak** dijadikan tunggakan otomatis karena datanya tidak ada.
+  - Bulan kebersihan yang tidak tercentang pada rumah wajib bayar ditampilkan sebagai *calon tunggakan* berstatus PERLU VERIFIKASI. Bendahara yang memutuskan menjadikannya tunggakan atau menghapusnya.
+  - Tagihan penuh Rp50.000 dengan FIFO berlaku mulai periode pertama pembukuan.
