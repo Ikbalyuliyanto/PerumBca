@@ -1,0 +1,31 @@
+<%- include('../partials/head') %>
+<h1 class="h4">Pengaturan</h1>
+<% const help = {
+  nama_perumahan: 'Tampil di kuitansi.',
+  rekening_info: 'Info rekening perumahan untuk transfer (tampil di halaman warga).',
+  tagihan_otomatis: 'true/false — buat tagihan otomatis tiap bulan pukul 08:00 WIB.',
+  tanggal_tagihan: 'Tanggal pembuatan tagihan otomatis (1-28).',
+  hari_pengingat: 'Tanggal kirim pengingat tunggakan, pisahkan koma (mis. 10,20).',
+  jatuh_tempo_hari: 'Informasi jatuh tempo (tanggal).',
+  template_tagihan: 'Variabel: {nama} {rumah} {periode} {nominal} {tunggakan} {link}',
+  template_pengingat: 'Variabel: {nama} {rumah} {tunggakan} {link}',
+  template_konfirmasi: 'Variabel: {nama} {rumah} {nomor} {nominal} {tunggakan}',
+  ringkasan_publik: 'true/false — tampilkan saldo dana publik ke warga.',
+  midtrans_fee_dana: 'Kode dana yang menanggung biaya Midtrans (mis. KAS).',
+  midtrans_fee_flat: 'Biaya Midtrans tetap per transaksi (Rp), 0 = tidak dicatat.',
+  midtrans_fee_persen: 'Biaya Midtrans persen dari nominal, mis. 0.7',
+  komponen_impor: 'Kode komponen default untuk centang di CSV impor.',
+}; %>
+<div class="card p-3">
+<form method="post" action="/admin/pengaturan">
+  <%- include('../partials/csrf') %>
+  <% keys.forEach(k => { %>
+    <div class="mb-3"><label class="form-label small fw-semibold"><%= k %></label>
+      <% if (k.startsWith('template_') || k === 'rekening_info') { %><textarea name="<%= k %>" rows="2" class="form-control form-control-sm"><%= s[k] %></textarea>
+      <% } else { %><input name="<%= k %>" value="<%= s[k] %>" class="form-control form-control-sm"><% } %>
+      <div class="form-text"><%= help[k] || '' %></div></div>
+  <% }) %>
+  <button class="btn btn-brand">Simpan</button>
+</form>
+</div>
+<%- include('../partials/foot') %>

@@ -1,0 +1,8 @@
+<%- include('../partials/head') %>
+<h1 class="h4">Audit log</h1>
+<form class="d-flex gap-2 mb-2" method="get"><input name="entitas" value="<%= query.entitas || '' %>" class="form-control form-control-sm" placeholder="Entitas (mis. Pembayaran)" style="width:auto"><input name="aksi" value="<%= query.aksi || '' %>" class="form-control form-control-sm" placeholder="Aksi" style="width:auto"><button class="btn btn-sm btn-outline-secondary">Filter</button></form>
+<div class="card"><div class="table-responsive"><table class="table table-sm small m-0">
+  <thead><tr><th>Waktu</th><th>User</th><th>Aksi</th><th>Entitas</th><th>Data</th><th>IP</th></tr></thead><tbody>
+  <% list.forEach(a => { %><tr><td class="text-nowrap"><%= u.waktu(a.createdAt) %></td><td><%= userMap[a.userId] || (a.userId ? '#' + a.userId : 'warga/sistem') %></td><td><%= a.aksi %></td><td><%= a.entitas %> <%= a.entitasId || '' %></td><td><code class="small text-wrap"><%= a.data ? JSON.stringify(a.data).slice(0, 300) : '' %></code></td><td><%= a.ip || '' %></td></tr><% }) %>
+</tbody></table></div></div>
+<%- include('../partials/foot') %>

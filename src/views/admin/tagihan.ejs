@@ -1,0 +1,32 @@
+<%- include('../partials/head') %>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+  <h1 class="h4 m-0">Tagihan</h1>
+  <% if (can('tagihan.generate')) { %>
+  <form method="post" action="/admin/tagihan/generate" class="d-flex flex-wrap gap-2 align-items-center" data-confirm="Buat tagihan untuk semua rumah yang wajib bayar pada periode ini?">
+    <%- include('../partials/csrf') %>
+    <input type="month" name="periode" value="<%= periode %>" class="form-control form-control-sm" style="width:auto" required>
+    <label class="small"><input type="checkbox" name="kirimWa"> kirim WA</label>
+    <button class="btn btn-sm btn-brand">Buat tagihan</button>
+  </form>
+  <% } %>
+</div>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-6 col-md-2"><input type="month" name="periode" value="<%= periode %>" class="form-control form-control-sm"></div>
+  <div class="col-6 col-md-2"><select name="status" class="form-select form-select-sm"><option value="">Semua status</option><% ['BELUM','SEBAGIAN','LUNAS','DIBATALKAN'].forEach(s => { %><option <%= query.status === s ? 'selected' : '' %>><%= s %></option><% }) %></select></div>
+  <div class="col-6 col-md-2"><select name="blok" class="form-select form-select-sm"><option value="">Semua blok</option><% bloks.forEach(b => { %><option <%= query.blok === b.kode ? 'selected' : '' %>><%= b.kode %></option><% }) %></select></div>
+  <div class="col-6 col-md-3 small d-flex align-items-center"><label><input type="checkbox" name="tunggakan" value="1" <%= query.tunggakan ? 'checked' : '' %>> semua tunggakan (lintas periode)</label></div>
+  <div class="col-md-1"><button class="btn btn-sm btn-outline-secondary w-100">Filter</button></div>
+</form>
+<div class="card"><div class="table-responsive"><table class="table table-sm table-hover m-0">
+  <thead><tr><th>Periode</th><th>Rumah</th><th>Penghuni</th><th class="text-end">Total</th><th class="text-end">Terbayar</th><th class="text-end">Sisa</th><th>Status</th><th></th></tr></thead><tbody>
+  <% list.forEach(t => { %>
+    <tr><td><%= t.periode %></td><td><a href="/admin/rumah/<%= t.rumahId %>"><%= t.rumah.kode %></a></td><td class="small"><%= t.rumah.penghunian[0]?.nama || '-' %></td>
+      <td class="text-end money"><%= u.rupiah(t.total) %></td><td class="text-end money"><%= u.rupiah(t.terbayar) %></td><td class="text-end money"><%= u.rupiah(t.total - t.terbayar) %></td>
+      <td><span class="badge text-bg-<%= {LUNAS:'success',SEBAGIAN:'warning',BELUM:'danger',DIBATALKAN:'secondary'}[t.status] %>"><%= t.status %></span></td>
+      <td><% if (can('pembayaran.input') && ['BELUM','SEBAGIAN'].includes(t.status)) { %><a class="btn btn-sm btn-outline-success py-0" href="/admin/pembayaran/baru?rumah=<%= t.rumahId %>">Bayar</a><% } %></td></tr>
+  <% }) %>
+  <% if (!list.length) { %><tr><td colspan="8" class="text-muted">Tidak ada tagihan.</td></tr><% } %>
+  </tbody>
+  <tfoot><tr class="fw-semibold"><td colspan="3"><%= list.length %> tagihan</td><td class="text-end money"><%= u.rupiah(sum.total) %></td><td class="text-end money"><%= u.rupiah(sum.terbayar) %></td><td class="text-end money"><%= u.rupiah(sum.total - sum.terbayar) %></td><td colspan="2"></td></tr></tfoot>
+</table></div></div>
+<%- include('../partials/foot') %>

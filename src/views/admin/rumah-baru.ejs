@@ -1,0 +1,15 @@
+<%- include('../partials/head') %>
+<h1 class="h4">Tambah rumah</h1>
+<div class="card p-3" style="max-width:520px">
+<form method="post" action="/admin/rumah/baru">
+  <%- include('../partials/csrf') %>
+  <div class="row g-2">
+    <div class="col-6"><label class="form-label">Blok</label><input name="blok" list="bloks" class="form-control" required maxlength="10"><datalist id="bloks"><% bloks.forEach(b => { %><option value="<%= b.kode %>"><% }) %></datalist></div>
+    <div class="col-6"><label class="form-label">Nomor</label><input name="nomor" class="form-control" required maxlength="10" placeholder="12A"></div>
+    <div class="col-6"><label class="form-label">Status</label><select name="kondisi" class="form-select"><option>AKTIF</option><option>KOSONG</option><option>TIDAK_DITEMPATI</option><option>PIHAK_KEDUA</option></select></div>
+    <div class="col-6"><label class="form-label">Berlaku mulai</label><input type="month" name="berlakuMulai" class="form-control" value="<%= u.periodeNow() %>" required></div>
+  </div>
+  <button class="btn btn-brand mt-3">Simpan</button>
+</form>
+</div>
+<%- include('../partials/foot') %>

@@ -1,0 +1,44 @@
+<%- include('../partials/head') %>
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h1 class="h4 m-0">Kebijakan iuran</h1>
+  <% if (can('kebijakan.kelola')) { %><a href="/admin/kebijakan/baru" class="btn btn-sm btn-brand"><i class="bi bi-plus"></i> Versi kebijakan baru</a><% } %>
+</div>
+<p class="small text-muted">Kebijakan berlaku mulai periode tertentu. Tagihan yang sudah dibuat menyimpan rincian saat dibuat, jadi perubahan kebijakan tidak mengubah tagihan lama.</p>
+<div class="row g-3">
+<div class="col-lg-8">
+  <% list.forEach(k => { const total = k.komponen.filter(x => x.aktif).reduce((s, x) => s + x.nominal, 0); %>
+  <div class="card p-3 mb-3 <%= k.id === berlakuId ? 'border border-success' : '' %>">
+    <div class="d-flex justify-content-between"><h2 class="h6 m-0"><%= k.nama %></h2><div><% if (k.id === berlakuId) { %><span class="badge text-bg-success">Berlaku sekarang</span><% } %> <span class="badge text-bg-light">mulai <%= u.periodeLabel(k.berlakuMulai) %></span></div></div>
+    <% if (k.catatan) { %><div class="small text-muted"><%= k.catatan %></div><% } %>
+    <table class="table table-sm small mt-2 mb-1"><thead><tr><th>Kode</th><th>Komponen</th><th>Dana tujuan</th><th class="text-end">Nominal</th><th>Aktif</th></tr></thead><tbody>
+      <% k.komponen.forEach(c => { %><tr class="<%= c.aktif ? '' : 'text-muted' %>"><td><%= c.kode %></td><td><%= c.nama %></td><td><%= c.dana.nama %></td><td class="text-end money"><%= u.rupiah(c.nominal) %></td><td><%= c.aktif ? 'Ya' : 'Tidak' %></td></tr><% }) %>
+      <tr class="fw-semibold"><td colspan="3">Total per bulan</td><td class="text-end money"><%= u.rupiah(total) %></td><td></td></tr>
+    </tbody></table>
+    <div class="small text-muted">Dipakai <%= k._count.tagihan %> tagihan</div>
+  </div>
+  <% }) %>
+</div>
+<div class="col-lg-4">
+  <div class="card p-3">
+    <h2 class="h6">Dana</h2>
+    <% dana.forEach(d => { %>
+      <% if (can('kebijakan.kelola')) { %>
+      <form method="post" action="/admin/dana/<%= d.id %>" class="border-bottom pb-2 mb-2 small"><%- include('../partials/csrf') %>
+        <div class="d-flex gap-1"><span class="badge text-bg-light align-self-center"><%= d.kode %></span><input name="nama" value="<%= d.nama %>" class="form-control form-control-sm"></div>
+        <label class="me-2"><input type="checkbox" name="aktif" <%= d.aktif ? 'checked' : '' %>> aktif</label>
+        <label class="me-2"><input type="checkbox" name="publik" <%= d.publik ? 'checked' : '' %>> tampil ke warga</label>
+        <button class="btn btn-link btn-sm p-0">simpan</button>
+      </form>
+      <% } else { %><div class="small"><%= d.kode %> — <%= d.nama %></div><% } %>
+    <% }) %>
+    <% if (can('kebijakan.kelola')) { %>
+    <form method="post" action="/admin/dana" class="row g-1 mt-2"><%- include('../partials/csrf') %>
+      <div class="col-4"><input name="kode" class="form-control form-control-sm" placeholder="KODE" required></div>
+      <div class="col-8"><input name="nama" class="form-control form-control-sm" placeholder="Nama dana" required></div>
+      <div class="col-12"><button class="btn btn-sm btn-outline-primary">Tambah dana</button></div>
+    </form>
+    <% } %>
+  </div>
+</div>
+</div>
+<%- include('../partials/foot') %>

@@ -1,0 +1,48 @@
+<%- include('../partials/head') %>
+<h1 class="h4">Impor &amp; verifikasi data</h1>
+<div class="row g-3">
+<div class="col-lg-4">
+  <div class="card p-3 mb-3">
+    <h2 class="h6">Unggah CSV</h2>
+    <form method="post" action="/admin/impor" enctype="multipart/form-data">
+      <%- include('../partials/csrf') %>
+      <div class="mb-2"><input type="file" name="csv" accept=".csv,text/csv" class="form-control form-control-sm" required></div>
+      <div class="row g-2 mb-2">
+        <div class="col-5"><label class="form-label small mb-0">Tahun kolom bulan</label><input name="tahun" type="number" value="2026" class="form-control form-control-sm"></div>
+        <div class="col-7"><label class="form-label small mb-0">Centang = komponen</label><input name="komponen" value="<%= komponenDefault %>" class="form-control form-control-sm"></div>
+      </div>
+      <div class="mb-2"><label class="form-label small mb-0">Nama sumber</label><input name="sumber" value="sheet-kebersihan-2026" class="form-control form-control-sm"></div>
+      <button class="btn btn-sm btn-brand">Impor</button>
+    </form>
+    <p class="small text-muted mt-2 mb-0">Kolom: <code>no_urut,nama,blok,nomor,status,jan..des,keterangan,verifikasi,catatan</code> (opsional <code>no_wa</code>). Impor aman diulang: rumah yang sudah ada tidak ditimpa.</p>
+    <% if (sumber.length) { %><ul class="small mt-2 mb-0"><% sumber.forEach(s => { %><li><%= s.sumber %>: <%= s._count %> baris</li><% }) %></ul><% } %>
+  </div>
+  <div class="card p-3">
+    <h2 class="h6">Rumah PERLU VERIFIKASI (<%= perlu.length %>)</h2>
+    <ul class="list-unstyled small mb-0">
+      <% perlu.forEach(r => { %><li class="mb-1"><a href="/admin/rumah/<%= r.id %>"><%= r.kode %></a> — <%= r.penghunian[0]?.nama || '(tanpa nama)' %><br><span class="text-muted"><%= r.catatan || '' %></span></li><% }) %>
+      <% if (!perlu.length) { %><li class="text-muted">Semua data sudah diverifikasi.</li><% } %>
+    </ul>
+  </div>
+</div>
+<div class="col-lg-8">
+  <div class="card p-3">
+    <h2 class="h6">Calon tunggakan dari data sumber (<%= calon.length %>)</h2>
+    <p class="small text-muted">Bulan yang <b>tidak tercentang</b> di sheet untuk rumah berstatus AKTIF. Bendahara memutuskan: jadikan tunggakan (dibuat tagihan komponen itu sesuai kebijakan periode tsb.), tandai sebenarnya lunas, atau abaikan.</p>
+    <form method="post" action="/admin/impor/keputusan">
+      <%- include('../partials/csrf') %>
+      <div class="d-flex flex-wrap gap-2 mb-2">
+        <button name="aksi" value="tunggakan" class="btn btn-sm btn-outline-danger" data-confirm="Buat tagihan untuk baris terpilih?">Jadikan tunggakan</button>
+        <button name="aksi" value="lunas" class="btn btn-sm btn-outline-success">Sebenarnya lunas</button>
+        <button name="aksi" value="abaikan" class="btn btn-sm btn-outline-secondary">Abaikan</button>
+      </div>
+      <div class="table-responsive" style="max-height:60vh"><table class="table table-sm small">
+        <thead><tr><th><input type="checkbox" data-check-all="ids"></th><th>Rumah</th><th>Periode</th><th>Komponen</th><th>Data</th></tr></thead><tbody>
+        <% calon.forEach(c => { %><tr><td><input type="checkbox" name="ids" value="<%= c.id %>"></td><td><a href="/admin/rumah/<%= c.rumahId %>"><%= c.kode %></a></td><td><%= u.periodeLabel(c.periode) %></td><td><%= c.kodeKomponen %></td><td><% if (c.verifikasi !== 'OK') { %><span class="badge text-bg-danger">PERLU VERIFIKASI</span><% } %></td></tr><% }) %>
+        <% if (!calon.length) { %><tr><td colspan="5" class="text-muted">Tidak ada.</td></tr><% } %>
+      </tbody></table></div>
+    </form>
+  </div>
+</div>
+</div>
+<%- include('../partials/foot') %>

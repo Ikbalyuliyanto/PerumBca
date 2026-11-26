@@ -1,0 +1,69 @@
+<%- include('../partials/head') %>
+<a href="/admin/pembayaran" class="small text-muted">&larr; Pembayaran</a>
+<h1 class="h4">Pembayaran <%= p.nomor %> <span class="badge text-bg-<%= {DIPOSTING:'success',MENUNGGU:'warning',DITOLAK:'secondary',DIBATALKAN:'dark'}[p.status] %> align-middle fs-6"><%= p.status %></span></h1>
+<div class="row g-3">
+<div class="col-lg-5">
+  <div class="card p-3 mb-3">
+    <dl class="row small mb-0">
+      <dt class="col-5">Rumah</dt><dd class="col-7"><a href="/admin/rumah/<%= p.rumahId %>"><%= p.rumah.kode %></a></dd>
+      <dt class="col-5">Metode</dt><dd class="col-7"><%= p.metode %></dd>
+      <dt class="col-5">Nominal</dt><dd class="col-7 money fw-semibold"><%= u.rupiah(p.nominal) %></dd>
+      <dt class="col-5">Tanggal</dt><dd class="col-7"><%= u.waktu(p.tanggal) %></dd>
+      <dt class="col-5">Dicatat oleh</dt><dd class="col-7"><%= users[p.dibuatOlehId] || (p.metode === 'TRANSFER' ? 'Warga (link)' : 'Sistem') %></dd>
+      <dt class="col-5">Diverifikasi</dt><dd class="col-7"><%= users[p.diverifikasiOlehId] || '-' %> <%= p.diverifikasiAt ? u.waktu(p.diverifikasiAt) : '' %></dd>
+      <% if (p.catatan) { %><dt class="col-5">Catatan</dt><dd class="col-7"><%= p.catatan %></dd><% } %>
+      <% if (p.alasanTolak) { %><dt class="col-5">Alasan tolak/batal</dt><dd class="col-7 text-danger"><%= p.alasanTolak %></dd><% } %>
+      <% if (p.midtrans) { %><dt class="col-5">Midtrans</dt><dd class="col-7"><%= p.midtrans.orderId %><br><%= p.midtrans.transactionId %> · <%= p.midtrans.paymentType %><br>settlement <%= u.waktu(p.midtrans.settlementAt) %><% if (p.midtrans.fee) { %><br>biaya <%= u.rupiah(p.midtrans.fee) %><% } %></dd><% } %>
+    </dl>
+    <% if (p.status === 'DIPOSTING') { %><a href="/admin/kuitansi/<%= p.id %>" class="btn btn-sm btn-outline-secondary mt-2" target="_blank"><i class="bi bi-printer"></i> Kuitansi</a><% } %>
+  </div>
+  <% if (p.bukti) { %>
+  <div class="card p-3 mb-3"><h2 class="h6">Bukti transfer</h2>
+    <% if (p.bukti.mime.startsWith('image/')) { %><a href="/file/<%= p.bukti.id %>" target="_blank"><img src="/file/<%= p.bukti.id %>" class="img-fluid rounded" alt="bukti"></a>
+    <% } else { %><a href="/file/<%= p.bukti.id %>" target="_blank">Lihat PDF</a><% } %>
+  </div>
+  <% } %>
+</div>
+<div class="col-lg-7">
+  <% if (p.alokasi.length) { %>
+  <div class="card p-3 mb-3"><h2 class="h6">Alokasi ke tagihan</h2>
+    <table class="table table-sm small"><thead><tr><th>Periode</th><th>Komponen</th><th class="text-end">Nominal</th></tr></thead><tbody>
+      <% p.alokasi.forEach(a => { %><tr><td><%= u.periodeLabel(a.tagihanItem.tagihan.periode) %></td><td><%= a.tagihanItem.nama %></td><td class="text-end money"><%= u.rupiah(a.nominal) %></td></tr><% }) %>
+    </tbody></table>
+  </div>
+  <% } %>
+
+  <% if (p.status === 'MENUNGGU' && can('pembayaran.verifikasi')) { %>
+  <div class="card p-3 mb-3 border border-warning">
+    <h2 class="h6">Verifikasi</h2>
+    <p class="small text-muted">Cocokkan dengan mutasi rekening sebelum menyetujui.</p>
+    <form method="post" action="/admin/pembayaran/<%= p.id %>/setujui" data-confirm="Setujui & posting pembayaran ini?">
+      <%- include('../partials/csrf') %>
+      <%- include('_alokasi', { tg }) %>
+      <div class="row g-2 align-items-end">
+        <div class="col-6"><label class="form-label small">Nominal sesuai mutasi</label><input name="nominal" data-money value="<%= p.nominal.toLocaleString('id-ID') %>" class="form-control form-control-sm"></div>
+        <div class="col-6"><button class="btn btn-success btn-sm w-100">Setujui</button></div>
+      </div>
+    </form>
+    <form method="post" action="/admin/pembayaran/<%= p.id %>/tolak" class="mt-3 d-flex gap-2">
+      <%- include('../partials/csrf') %>
+      <input name="alasan" class="form-control form-control-sm" placeholder="Alasan penolakan" required>
+      <button class="btn btn-outline-danger btn-sm">Tolak</button>
+    </form>
+  </div>
+  <% } %>
+
+  <% if (p.status === 'DIPOSTING' && can('pembayaran.koreksi')) { %>
+  <div class="card p-3 border border-danger">
+    <h2 class="h6 text-danger">Batalkan pembayaran</h2>
+    <p class="small text-muted">Membuat transaksi pembalik di buku kas dan mengembalikan tagihan ke status belum lunas. Tidak ada data yang dihapus.</p>
+    <form method="post" action="/admin/pembayaran/<%= p.id %>/batal" class="d-flex gap-2" data-confirm="Yakin membatalkan pembayaran ini?">
+      <%- include('../partials/csrf') %>
+      <input name="alasan" class="form-control form-control-sm" placeholder="Alasan pembatalan" required>
+      <button class="btn btn-danger btn-sm">Batalkan</button>
+    </form>
+  </div>
+  <% } %>
+</div>
+</div>
+<%- include('../partials/foot') %>

@@ -1,0 +1,28 @@
+# Stack aplikasi. Postgres berjalan terpisah (container "postgres" di network "backend"),
+# tidak membuka port ke internet. Letakkan file ini + .env di /opt/perumbca.
+services:
+  app:
+    build:
+      context: ./src
+      dockerfile: docker/Dockerfile
+    image: perumbca-app:latest
+    container_name: perumbca-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_OPTIONS: --max-old-space-size=160
+    ports: ["${APP_BIND:-0.0.0.0}:${APP_PORT:-3000}:3000"]
+    volumes:
+      - ./storage:/app/storage
+    mem_limit: 320m
+    networks: [backend]
+    # Contoh label Traefik (aktifkan bila Traefik sudah terpasang):
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.http.routers.perumbca.rule=Host(`iuran.example.com`)
+    #   - traefik.http.routers.perumbca.entrypoints=websecure
+    #   - traefik.http.routers.perumbca.tls.certresolver=le
+    #   - traefik.http.services.perumbca.loadbalancer.server.port=3000
+networks:
+  backend:
+    external: true

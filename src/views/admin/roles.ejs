@@ -1,0 +1,17 @@
+<%- include('../partials/head') %>
+<h1 class="h4">Role &amp; hak akses</h1>
+<p class="small text-muted">Super Admin selalu memiliki semua izin. Pemeriksaan izin dilakukan di server untuk setiap aksi.</p>
+<form method="post" action="/admin/roles">
+  <%- include('../partials/csrf') %>
+  <div class="card"><div class="table-responsive"><table class="table table-sm small m-0">
+    <thead><tr><th>Izin</th><% roles.forEach(r => { %><th class="text-center"><%= r.nama %><br><span class="text-muted"><%= r.kode %></span></th><% }) %></tr></thead><tbody>
+    <% let grup = ''; perms.forEach(p => { %>
+      <% if (p.grup !== grup) { grup = p.grup; %><tr class="table-light"><td colspan="<%= roles.length + 1 %>"><b><%= grup %></b></td></tr><% } %>
+      <tr><td><%= p.nama %> <span class="text-muted">(<%= p.kode %>)</span></td>
+        <% roles.forEach(r => { %><td class="text-center"><input type="checkbox" name="r<%= r.id %>" value="<%= p.kode %>" <%= r.permissions.some(x => x.permissionKode === p.kode) ? 'checked' : '' %>></td><% }) %></tr>
+    <% }) %>
+  </tbody></table></div></div>
+  <div class="row g-2 mt-2"><div class="col-md-3"><input name="newKode" class="form-control form-control-sm" placeholder="Kode role baru (opsional)"></div><div class="col-md-3"><input name="newNama" class="form-control form-control-sm" placeholder="Nama role baru"></div>
+  <div class="col-md-2"><button class="btn btn-sm btn-brand w-100">Simpan</button></div></div>
+</form>
+<%- include('../partials/foot') %>

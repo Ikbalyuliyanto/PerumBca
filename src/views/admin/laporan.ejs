@@ -1,0 +1,40 @@
+<%- include('../partials/head') %>
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h1 class="h4 m-0">Laporan keuangan</h1>
+  <div class="no-print d-flex gap-2">
+    <a class="btn btn-sm btn-outline-secondary" href="?<%= new URLSearchParams({ ...query, format: 'csv' }).toString() %>"><i class="bi bi-download"></i> CSV</a>
+    <button class="btn btn-sm btn-outline-secondary" data-print><i class="bi bi-printer"></i> Cetak</button>
+  </div>
+</div>
+<form class="row g-2 mb-3 no-print" method="get">
+  <div class="col-6 col-md-2"><label class="small">Dari</label><input type="month" name="dari" value="<%= dariP %>" class="form-control form-control-sm"></div>
+  <div class="col-6 col-md-2"><label class="small">Sampai</label><input type="month" name="sampai" value="<%= sampaiP %>" class="form-control form-control-sm"></div>
+  <div class="col-6 col-md-2"><label class="small">Dana</label><select name="dana" class="form-select form-select-sm"><option value="">Semua</option><% dana.forEach(d => { %><option value="<%= d.id %>" <%= query.dana == d.id ? 'selected' : '' %>><%= d.nama %></option><% }) %></select></div>
+  <div class="col-6 col-md-2"><label class="small">Jenis</label><select name="jenis" class="form-select form-select-sm"><option value="">Semua</option><% ['SALDO_AWAL','IURAN','PENGELUARAN','BIAYA_MIDTRANS','PEMBALIK','LAINNYA'].forEach(j => { %><option <%= query.jenis === j ? 'selected' : '' %>><%= j %></option><% }) %></select></div>
+  <div class="col-6 col-md-1"><label class="small">Blok</label><select name="blok" class="form-select form-select-sm"><option value="">Semua</option><% bloks.forEach(b => { %><option <%= query.blok === b.kode ? 'selected' : '' %>><%= b.kode %></option><% }) %></select></div>
+  <div class="col-6 col-md-2"><label class="small">Rumah</label><input name="rumah" value="<%= query.rumah || '' %>" class="form-control form-control-sm" placeholder="mis. B12A"></div>
+  <div class="col-md-1 d-flex align-items-end"><button class="btn btn-sm btn-brand w-100">Tampilkan</button></div>
+</form>
+<p class="small text-muted">Periode <%= u.periodeLabel(dariP) %> – <%= u.periodeLabel(sampaiP) %>. Saldo akhir = saldo awal periode + pemasukan − pengeluaran.</p>
+<div class="card p-3 mb-3"><h2 class="h6">Rekap per dana</h2>
+<div class="table-responsive"><table class="table table-sm small">
+  <thead><tr><th>Dana</th><th class="text-end">Saldo awal periode</th><th class="text-end">Pemasukan</th><th class="text-end">Pengeluaran</th><th class="text-end">Saldo akhir</th></tr></thead><tbody>
+  <% rekap.forEach(d => { %><tr><td><%= d.nama %></td><td class="text-end money"><%= u.rupiah(d.saldoAwal) %></td><td class="text-end money text-success"><%= u.rupiah(d.masuk) %></td><td class="text-end money text-danger"><%= u.rupiah(d.keluar) %></td><td class="text-end money fw-semibold"><%= u.rupiah(d.saldoAkhir) %></td></tr><% }) %>
+  <% const T = rekap.reduce((a, d) => ({ sa: a.sa + d.saldoAwal, m: a.m + d.masuk, k: a.k + d.keluar, s: a.s + d.saldoAkhir }), { sa: 0, m: 0, k: 0, s: 0 }); %>
+  <tr class="fw-semibold"><td>Total</td><td class="text-end money"><%= u.rupiah(T.sa) %></td><td class="text-end money"><%= u.rupiah(T.m) %></td><td class="text-end money"><%= u.rupiah(T.k) %></td><td class="text-end money"><%= u.rupiah(T.s) %></td></tr>
+</tbody></table></div>
+<% if (query.dana || query.jenis) { %><div class="small text-warning">Filter dana/jenis aktif: rekap hanya menghitung transaksi yang lolos filter.</div><% } %>
+</div>
+<div class="card p-3 mb-3"><h2 class="h6">Tagihan per rumah</h2>
+<div class="table-responsive"><table class="table table-sm small">
+  <thead><tr><th>Rumah</th><th class="text-end">Bulan</th><th class="text-end">Total tagihan</th><th class="text-end">Terbayar</th><th class="text-end">Sisa</th></tr></thead><tbody>
+  <% rumahRekap.forEach(r => { %><tr><td><%= r.kode %></td><td class="text-end"><%= r.bulan %><% if (r.belum) { %> <span class="text-danger">(<%= r.belum %> belum)</span><% } %></td><td class="text-end money"><%= u.rupiah(r.total) %></td><td class="text-end money"><%= u.rupiah(r.terbayar) %></td><td class="text-end money <%= r.total - r.terbayar ? 'text-danger' : '' %>"><%= u.rupiah(r.total - r.terbayar) %></td></tr><% }) %>
+  <% if (!rumahRekap.length) { %><tr><td colspan="5" class="text-muted">Tidak ada tagihan pada periode ini.</td></tr><% } %>
+</tbody></table></div></div>
+<div class="card p-3"><h2 class="h6">Rincian transaksi (<%= entries.length %>)</h2>
+<div class="table-responsive"><table class="table table-sm small">
+  <thead><tr><th>Tanggal</th><th>Dana</th><th>Jenis</th><th>Keterangan</th><th class="text-end">Masuk</th><th class="text-end">Keluar</th></tr></thead><tbody>
+  <% entries.forEach(e => { %><tr><td><%= u.tanggal(e.tanggal) %></td><td><%= e.dana.kode %></td><td><%= e.jenis %></td><td><%= e.keterangan %></td><td class="text-end money"><%= e.arah === 'MASUK' ? u.rupiah(e.nominal) : '' %></td><td class="text-end money"><%= e.arah === 'KELUAR' ? u.rupiah(e.nominal) : '' %></td></tr><% }) %>
+</tbody></table></div></div>
+<script src="/static/js/print.js"></script>
+<%- include('../partials/foot') %>

@@ -1,0 +1,71 @@
+<%- include('../partials/head') %>
+<div class="row justify-content-center"><div class="col-lg-8">
+  <div class="card p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start">
+      <div><div class="text-muted small"><%= s.nama_perumahan %></div><h1 class="h4 m-0">Rumah <%= rumah.kode %></h1><div><%= penghuni ? penghuni.nama : '' %></div></div>
+      <div class="text-end"><div class="small text-muted">Total tagihan</div><div class="fs-4 fw-semibold money <%= tg.total ? 'text-danger' : 'text-success' %>"><%= tg.total ? u.rupiah(tg.total) : 'Lunas' %></div></div>
+    </div>
+  </div>
+
+  <% if (tg.list.length) { %>
+  <div class="card p-3 mb-3">
+    <h2 class="h6">Tagihan belum lunas</h2>
+    <table class="table table-sm small mb-2"><thead><tr><th>Periode</th><th>Rincian</th><th class="text-end">Sisa</th></tr></thead><tbody>
+      <% tg.list.forEach(t => { %><tr><td><%= u.periodeLabel(t.periode) %></td><td><% t.items.forEach(i => { %><div><%= i.nama %>: <span class="money"><%= u.rupiah(i.nominal) %></span><% if (i.terbayar) { %> <span class="text-success">(dibayar <%= u.rupiah(i.terbayar) %>)</span><% } %></div><% }) %></td><td class="text-end money"><%= u.rupiah(t.total - t.terbayar) %></td></tr><% }) %>
+    </tbody></table>
+    <p class="small text-muted mb-0">Pembayaran dialokasikan ke tagihan paling lama terlebih dahulu.</p>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h2 class="h6">Cara bayar</h2>
+    <% if (midtransOn) { %>
+      <button id="pay-midtrans" class="btn btn-brand mb-3" data-url="/r/<%= token %>/midtrans" data-csrf="<%= csrfToken %>"><i class="bi bi-credit-card"></i> Bayar online <%= u.rupiah(tg.total) %> (QRIS / VA / e-wallet)</button>
+    <% } %>
+    <div class="mb-2"><b>Transfer bank</b><div class="small" style="white-space:pre-line"><%= s.rekening_info %></div></div>
+    <form method="post" action="/r/<%= token %>/transfer" enctype="multipart/form-data" class="row g-2">
+      <%- include('../partials/csrf') %>
+      <div class="col-6"><label class="form-label small mb-0">Nominal ditransfer</label><input name="nominal" data-money class="form-control form-control-sm" value="<%= tg.total.toLocaleString('id-ID') %>" required></div>
+      <div class="col-6"><label class="form-label small mb-0">Tanggal transfer</label><input type="date" name="tanggal" class="form-control form-control-sm" value="<%= new Date().toISOString().slice(0,10) %>"></div>
+      <div class="col-12"><label class="form-label small mb-0">Foto/PDF bukti transfer</label><input type="file" name="bukti" accept="image/*,application/pdf" class="form-control form-control-sm" required></div>
+      <div class="col-12"><input name="catatan" class="form-control form-control-sm" placeholder="Catatan (opsional)" maxlength="300"></div>
+      <div class="col-12"><button class="btn btn-outline-primary btn-sm">Kirim bukti transfer</button></div>
+    </form>
+    <p class="small text-muted mt-2 mb-0">Bayar tunai? Serahkan ke bendahara, pembayaran akan dicatat langsung.</p>
+  </div>
+  <% } %>
+
+  <div class="card p-3 mb-3">
+    <h2 class="h6">Riwayat pembayaran</h2>
+    <table class="table table-sm small mb-0"><tbody>
+      <% riwayat.forEach(p => { %><tr><td><%= u.tanggal(p.tanggal) %></td><td><%= p.metode %></td><td class="money"><%= u.rupiah(p.nominal) %></td>
+        <td><span class="badge text-bg-<%= {DIPOSTING:'success',MENUNGGU:'warning',DITOLAK:'secondary',DIBATALKAN:'dark'}[p.status] %>"><%= {DIPOSTING:'Diterima',MENUNGGU:'Menunggu verifikasi',DITOLAK:'Ditolak',DIBATALKAN:'Dibatalkan'}[p.status] %></span><% if (p.alasanTolak) { %> <span class="text-muted"><%= p.alasanTolak %></span><% } %></td>
+        <td><% if (p.status === 'DIPOSTING') { %><a href="/r/<%= token %>/kuitansi/<%= p.id %>" target="_blank">kuitansi</a><% } %></td></tr><% }) %>
+      <% if (!riwayat.length) { %><tr><td class="text-muted">Belum ada.</td></tr><% } %>
+    </tbody></table>
+    <% if (lunas.length) { %><div class="small text-muted mt-2">Bulan lunas: <%= lunas.map(t => u.periodeLabel(t.periode)).join(', ') %></div><% } %>
+  </div>
+
+  <% if (publik) { %>
+  <div class="card p-3 mb-3">
+    <h2 class="h6">Ringkasan keuangan perumahan</h2>
+    <div class="row g-2"><% publik.dana.forEach(d => { %><div class="col-6"><div class="border rounded p-2 small"><div class="text-muted"><%= d.nama %></div><div class="fw-semibold money"><%= u.rupiah(d.saldo) %></div></div></div><% }) %></div>
+  </div>
+  <% } %>
+
+  <div class="card p-3 mb-3">
+    <h2 class="h6">Ubah data penghuni</h2>
+    <% if (pengajuan) { %><p class="small text-muted mb-0">Pengajuan Anda sedang menunggu persetujuan pengurus.</p>
+    <% } else { %>
+    <form method="post" action="/r/<%= token %>/pengajuan" class="row g-2">
+      <%- include('../partials/csrf') %>
+      <div class="col-md-5"><input name="nama" class="form-control form-control-sm" placeholder="Nama baru (kosongkan jika tetap)" maxlength="100"></div>
+      <div class="col-md-4"><input name="noWa" class="form-control form-control-sm" placeholder="No. WA baru" maxlength="20"></div>
+      <div class="col-md-3"><button class="btn btn-sm btn-outline-secondary w-100">Ajukan</button></div>
+      <div class="col-12"><input name="alasan" class="form-control form-control-sm" placeholder="Alasan (mis. pindah/ganti nomor)" maxlength="300"></div>
+    </form>
+    <p class="small text-muted mt-1 mb-0">Blok dan nomor rumah tidak dapat diubah.</p>
+    <% } %>
+  </div>
+  <p class="small text-muted text-center">Jangan bagikan link ini ke orang lain.</p>
+</div></div>
+<%- include('../partials/foot') %>

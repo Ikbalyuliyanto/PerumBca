@@ -1,0 +1,20 @@
+:root { --brand: #1f6f50; --brand-dark: #165a40; }
+body { background: #f4f6f5; }
+.bg-brand { background: var(--brand) !important; }
+.btn-brand { background: var(--brand); color: #fff; border-color: var(--brand); }
+.btn-brand:hover { background: var(--brand-dark); color: #fff; }
+.card { border: 0; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.stat .val { font-size: 1.5rem; font-weight: 600; }
+.stat .lbl { color: #6c757d; font-size: .85rem; }
+.table td, .table th { vertical-align: middle; }
+.table-sm td, .table-sm th { padding: .35rem .5rem; }
+.kondisi-AKTIF { background: #f3d9c4; }
+.kondisi-KOSONG { background: #f5b7b1; }
+.kondisi-TIDAK_DITEMPATI { background: #aed6f1; }
+.kondisi-PIHAK_KEDUA { background: #fcf3a1; }
+.badge.kondisi-AKTIF, .badge.kondisi-KOSONG, .badge.kondisi-TIDAK_DITEMPATI, .badge.kondisi-PIHAK_KEDUA { color: #222; }
+.bulan-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2px; font-size: .7rem; text-align: center; }
+.bulan-grid span { padding: 2px 0; border-radius: 3px; background: #e9ecef; }
+.bulan-grid span.ok { background: #a3d9a5; }
+.money { font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media print { nav, footer, .no-print { display: none !important; } body { background: #fff; } .card { box-shadow: none; } }

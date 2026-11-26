@@ -1,0 +1,18 @@
+<%- include('../partials/head') %>
+<div class="row justify-content-center mt-4">
+  <div class="col-sm-8 col-md-5 col-lg-4">
+    <div class="card p-4">
+      <h1 class="h4 mb-1">Masuk</h1>
+      <p class="text-muted small mb-3">Sistem iuran Perumahan Bumi Cikarang Asri</p>
+      <% if (error) { %><div class="alert alert-danger py-2"><%= error %></div><% } %>
+      <form method="post" action="/login" autocomplete="on">
+        <%- include('../partials/csrf') %>
+        <div class="mb-3"><label class="form-label">Username</label><input name="username" class="form-control" value="<%= username %>" required autofocus autocapitalize="none"></div>
+        <div class="mb-3"><label class="form-label">Password</label><input name="password" type="password" class="form-control" required autocomplete="current-password"></div>
+        <button class="btn btn-brand w-100">Masuk</button>
+      </form>
+      <p class="small text-muted mt-3 mb-0">Warga: buka link tagihan yang dikirim lewat WhatsApp, tidak perlu login.</p>
+    </div>
+  </div>
+</div>
+<%- include('../partials/foot') %>

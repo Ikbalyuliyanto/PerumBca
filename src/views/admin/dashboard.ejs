@@ -1,0 +1,32 @@
+<%- include('../partials/head') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 m-0">Dashboard</h1><span class="text-muted"><%= u.periodeLabel(periode) %></span>
+</div>
+<% if (menunggu || pending || verifikasi) { %>
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <% if (menunggu) { %><a href="/admin/pembayaran?status=MENUNGGU" class="btn btn-warning btn-sm"><i class="bi bi-hourglass-split"></i> <%= menunggu %> pembayaran menunggu verifikasi</a><% } %>
+  <% if (pending) { %><a href="/admin/pengeluaran?status=PENDING" class="btn btn-warning btn-sm"><i class="bi bi-clipboard-check"></i> <%= pending %> pengeluaran menunggu persetujuan</a><% } %>
+  <% if (verifikasi) { %><a href="/admin/impor" class="btn btn-outline-danger btn-sm"><i class="bi bi-exclamation-triangle"></i> <%= verifikasi %> rumah PERLU VERIFIKASI</a><% } %>
+</div>
+<% } %>
+<div class="row g-2 mb-3">
+  <% [['Total rumah', totalRumah], ['Aktif', kondisi.AKTIF], ['Kosong', kondisi.KOSONG], ['Tidak ditempati', kondisi.TIDAK_DITEMPATI], ['Pihak kedua', kondisi.PIHAK_KEDUA]].forEach(([l, v]) => { %>
+  <div class="col-6 col-md"><div class="card stat p-3"><div class="lbl"><%= l %></div><div class="val"><%= v %></div></div></div>
+  <% }) %>
+</div>
+<div class="row g-2 mb-3">
+  <div class="col-6 col-md-3"><div class="card stat p-3"><div class="lbl">Tagihan bulan ini (<%= tagBulan._count %>)</div><div class="val money"><%= u.rupiah(tagBulan._sum.total) %></div><div class="small text-success">terbayar <%= u.rupiah(tagBulan._sum.terbayar) %></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat p-3"><div class="lbl">Pembayaran bulan ini (<%= bayarBulan._count %>)</div><div class="val money"><%= u.rupiah(bayarBulan._sum.nominal) %></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat p-3"><div class="lbl">Total tunggakan</div><div class="val money text-danger"><%= u.rupiah(tunggakan.n) %></div><div class="small"><%= tunggakan.rumah %> rumah</div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat p-3"><div class="lbl">Arus kas bulan ini</div><div class="small text-success">+ <%= u.rupiah(masuk) %></div><div class="small text-danger">− <%= u.rupiah(keluar) %></div></div></div>
+</div>
+<div class="card p-3">
+  <h2 class="h6">Saldo dana</h2>
+  <div class="row g-2">
+    <% saldo.forEach(d => { %>
+      <div class="col-6 col-md-3"><div class="border rounded p-2"><div class="small text-muted"><%= d.nama %></div><div class="fw-semibold money"><%= u.rupiah(d.saldo) %></div></div></div>
+    <% }) %>
+    <div class="col-6 col-md-3"><div class="border rounded p-2 bg-light"><div class="small text-muted">Total</div><div class="fw-semibold money"><%= u.rupiah(saldo.reduce((s, d) => s + d.saldo, 0)) %></div></div></div>
+  </div>
+</div>
+<%- include('../partials/foot') %>

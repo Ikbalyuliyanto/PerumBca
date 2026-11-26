@@ -1,0 +1,20 @@
+<%# Tabel tunggakan + pilihan alokasi FIFO / manual. Butuh: tg %>
+<% if (tg && tg.list.length) { %>
+<div class="mb-2">
+  <label class="me-3"><input type="radio" name="mode" value="fifo" checked> Otomatis (tunggakan tertua dulu)</label>
+  <label><input type="radio" name="mode" value="manual"> Atur alokasi manual</label>
+</div>
+<table class="table table-sm small">
+  <thead><tr><th>Periode</th><th>Komponen</th><th class="text-end">Sisa</th><th id="alok-head">Alokasi manual</th></tr></thead>
+  <tbody>
+  <% tg.list.forEach(t => t.items.filter(i => i.terbayar < i.nominal).forEach(i => { %>
+    <tr><td><%= u.periodeLabel(t.periode) %></td><td><%= i.nama %></td><td class="text-end money"><%= u.rupiah(i.nominal - i.terbayar) %></td>
+      <td><div id="<%= '' %>" class="alok-cell"><input name="alok[<%= i.id %>]" data-money class="form-control form-control-sm" placeholder="0" style="max-width:120px"></div></td></tr>
+  <% })) %>
+  </tbody>
+  <tfoot><tr class="fw-semibold"><td colspan="2">Total tunggakan</td><td class="text-end money"><%= u.rupiah(tg.total) %></td><td></td></tr></tfoot>
+</table>
+<div id="alok-manual" class="d-none small text-muted mb-2">Mode manual: jumlah alokasi harus sama dengan nominal pembayaran. Kolom alokasi diabaikan pada mode otomatis.</div>
+<% } else if (tg) { %>
+<div class="alert alert-info py-2 small">Tidak ada tunggakan terbuka untuk rumah ini. Buat tagihan periode berikutnya dulu bila warga membayar di muka.</div>
+<% } %>

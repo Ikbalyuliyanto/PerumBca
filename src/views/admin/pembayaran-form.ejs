@@ -1,0 +1,21 @@
+<%- include('../partials/head') %>
+<h1 class="h4">Input pembayaran tunai</h1>
+<div class="card p-3" style="max-width:760px">
+  <div class="mb-3"><label class="form-label">Rumah</label>
+    <select class="form-select" data-reload-param="rumah"><option value="">— pilih rumah —</option>
+      <% rumahList.forEach(r => { %><option value="<%= r.id %>" <%= r.id === rumahId ? 'selected' : '' %>><%= r.kode %> — <%= r.penghunian[0]?.nama || '' %></option><% }) %></select></div>
+  <% if (rumahId) { %>
+  <form method="post" action="/admin/pembayaran" data-confirm="Simpan pembayaran tunai ini? Data yang diposting tidak bisa diedit (koreksi lewat pembatalan).">
+    <%- include('../partials/csrf') %>
+    <input type="hidden" name="rumahId" value="<%= rumahId %>">
+    <%- include('_alokasi', { tg }) %>
+    <div class="row g-2">
+      <div class="col-6 col-md-4"><label class="form-label">Nominal diterima</label><input name="nominal" data-money class="form-control" required value="<%= tg && tg.total ? Math.min(tg.total, tg.list[0].total - tg.list[0].terbayar).toLocaleString('id-ID') : '' %>"></div>
+      <div class="col-6 col-md-4"><label class="form-label">Tanggal terima</label><input type="date" name="tanggal" class="form-control" value="<%= new Date().toISOString().slice(0,10) %>"></div>
+      <div class="col-md-4"><label class="form-label">Catatan</label><input name="catatan" class="form-control" maxlength="300"></div>
+    </div>
+    <button class="btn btn-brand mt-3">Simpan &amp; posting</button>
+  </form>
+  <% } %>
+</div>
+<%- include('../partials/foot') %>

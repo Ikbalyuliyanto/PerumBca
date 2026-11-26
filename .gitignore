@@ -7,3 +7,4 @@ backups/
 wa-auth/
 *.log
 data/import/
+storage/

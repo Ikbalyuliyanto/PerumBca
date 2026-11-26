@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title><%= title %> · <%= appName %></title>
+  <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/vendor/icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+<% const staffNav = locals.user && locals.isStaff; %>
+<nav class="navbar navbar-expand-lg navbar-dark bg-brand sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-semibold" href="/"><i class="bi bi-house-heart"></i> BCA</a>
+    <% if (staffNav) { %>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-label="Menu"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav me-auto">
+        <% const nav = [
+          ['dashboard.lihat','/admin','Dashboard'],
+          ['rumah.lihat','/admin/rumah','Rumah'],
+          ['tagihan.lihat','/admin/tagihan','Tagihan'],
+          ['pembayaran.lihat','/admin/pembayaran','Pembayaran'],
+          ['pengeluaran.lihat','/admin/pengeluaran','Pengeluaran'],
+          ['ledger.lihat','/admin/ledger','Buku kas'],
+          ['laporan.lihat','/admin/laporan','Laporan'],
+        ]; %>
+        <% nav.forEach(([p, href, label]) => { if (can(p)) { %>
+          <li class="nav-item"><a class="nav-link <%= (href === '/admin' ? path === '/admin' || path === '/admin/' : path.startsWith(href)) ? 'active' : '' %>" href="<%= href %>"><%= label %></a></li>
+        <% } }) %>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Lainnya</a>
+          <ul class="dropdown-menu">
+            <% if (can('kebijakan.lihat')) { %><li><a class="dropdown-item" href="/admin/kebijakan">Kebijakan iuran</a></li><% } %>
+            <% if (can('pengajuan.putuskan')) { %><li><a class="dropdown-item" href="/admin/pengajuan">Pengajuan warga</a></li><% } %>
+            <% if (can('impor.kelola')) { %><li><a class="dropdown-item" href="/admin/impor">Impor &amp; verifikasi</a></li><% } %>
+            <% if (can('wa.kelola')) { %><li><a class="dropdown-item" href="/admin/wa">WhatsApp</a></li><% } %>
+            <% if (can('user.kelola')) { %><li><a class="dropdown-item" href="/admin/users">Akun pengguna</a></li><% } %>
+            <% if (user.isSuperAdmin) { %>
+              <li><a class="dropdown-item" href="/admin/roles">Role &amp; hak akses</a></li>
+              <li><a class="dropdown-item" href="/admin/pengaturan">Pengaturan</a></li>
+            <% } %>
+            <% if (can('audit.lihat')) { %><li><a class="dropdown-item" href="/admin/audit">Audit log</a></li><% } %>
+          </ul>
+        </li>
+      </ul>
+      <% } %>
+      <% if (locals.user) { %>
+      <div class="d-flex align-items-center gap-2 text-white small <%= staffNav ? '' : 'ms-auto' %>">
+        <a class="text-white text-decoration-none" href="/akun/password" title="Ganti password"><i class="bi bi-person-circle"></i> <%= user.nama %><% if (user.isSuperAdmin) { %> <span class="badge text-bg-warning">Super Admin</span><% } %></a>
+        <form method="post" action="/logout" class="m-0"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-outline-light">Keluar</button></form>
+      </div>
+      <% } %>
+    <% if (staffNav) { %></div><% } %>
+  </div>
+</nav>
+<main class="container-xl py-3">
+<% if (locals.flash) { %>
+  <div class="alert alert-<%= flash.type %> alert-dismissible fade show" role="alert"><%= flash.msg %><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+<% } %>

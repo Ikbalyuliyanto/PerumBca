@@ -1,0 +1,436 @@
+// Skema database Sistem Iuran Bumi Cikarang Asri.
+// Uang disimpan dalam rupiah bulat (Int). Periode tagihan "YYYY-MM".
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────── Akun & hak akses ─────────────
+
+model User {
+  id           Int        @id @default(autoincrement())
+  username     String     @unique
+  nama         String
+  noWa         String?
+  passwordHash String
+  isSuperAdmin Boolean    @default(false)
+  aktif        Boolean    @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  roles        UserRole[]
+  rumah        UserRumah[]
+}
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  kode        String           @unique
+  nama        String
+  sistem      Boolean          @default(false) // role bawaan, tidak bisa dihapus
+  permissions RolePermission[]
+  users       UserRole[]
+}
+
+model Permission {
+  kode  String           @id
+  nama  String
+  grup  String
+  roles RolePermission[]
+}
+
+model RolePermission {
+  roleId         Int
+  permissionKode String
+  role           Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission     Permission @relation(fields: [permissionKode], references: [kode], onDelete: Cascade)
+
+  @@id([roleId, permissionKode])
+}
+
+model UserRole {
+  userId Int
+  roleId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model UserRumah {
+  userId  Int
+  rumahId Int
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rumah   Rumah @relation(fields: [rumahId], references: [id], onDelete: Cascade)
+
+  @@id([userId, rumahId])
+}
+
+// ───────────── Data perumahan ─────────────
+
+enum Verifikasi {
+  OK
+  PERLU_VERIFIKASI
+}
+
+enum KondisiRumah {
+  AKTIF
+  KOSONG
+  TIDAK_DITEMPATI
+  PIHAK_KEDUA
+}
+
+model Blok {
+  id     Int     @id @default(autoincrement())
+  kode   String  @unique
+  nama   String?
+  urutan Int     @default(0)
+  rumah  Rumah[]
+}
+
+model Rumah {
+  id           Int                  @id @default(autoincrement())
+  blokId       Int
+  nomor        String // teks: "12A"
+  kode         String               @unique // "B12A"
+  noUrutSumber Int?
+  verifikasi   Verifikasi           @default(OK)
+  catatan      String?
+  aktif        Boolean              @default(true)
+  tokenVersi   Int                  @default(1) // naikkan untuk mencabut link warga
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  blok         Blok                 @relation(fields: [blokId], references: [id])
+  penghunian   Penghunian[]
+  status       StatusRumah[]
+  tagihan      Tagihan[]
+  pembayaran   Pembayaran[]
+  pengajuan    PengajuanPerubahan[]
+  riwayatImpor RiwayatImpor[]
+  users        UserRumah[]
+
+  @@unique([blokId, nomor])
+}
+
+model Penghunian {
+  id         Int        @id @default(autoincrement())
+  rumahId    Int
+  nama       String
+  noWa       String?
+  mulai      DateTime   @default(now()) @db.Date
+  selesai    DateTime?  @db.Date
+  verifikasi Verifikasi @default(OK)
+  catatan    String?
+  createdAt  DateTime   @default(now())
+  rumah      Rumah      @relation(fields: [rumahId], references: [id])
+
+  @@index([rumahId, selesai])
+}
+
+model StatusRumah {
+  id            Int          @id @default(autoincrement())
+  rumahId       Int
+  kondisi       KondisiRumah
+  berlakuMulai  String // "YYYY-MM"
+  // null = ikuti default kondisi (AKTIF: semua komponen, lainnya: tidak ada).
+  // berisi daftar kode komponen yang tetap wajib dibayar.
+  komponenWajib String[]
+  catatan       String?
+  createdById   Int?
+  createdAt     DateTime     @default(now())
+  rumah         Rumah        @relation(fields: [rumahId], references: [id])
+
+  @@unique([rumahId, berlakuMulai])
+}
+
+enum StatusPengajuan {
+  PENDING
+  DISETUJUI
+  DITOLAK
+}
+
+model PengajuanPerubahan {
+  id               Int             @id @default(autoincrement())
+  rumahId          Int
+  namaBaru         String?
+  noWaBaru         String?
+  alasan           String?
+  status           StatusPengajuan @default(PENDING)
+  diputuskanOlehId Int?
+  diputuskanAt     DateTime?
+  createdAt        DateTime        @default(now())
+  rumah            Rumah           @relation(fields: [rumahId], references: [id])
+}
+
+model RiwayatImpor {
+  id           Int        @id @default(autoincrement())
+  rumahId      Int
+  periode      String // "YYYY-MM"
+  kodeKomponen String
+  terbayar     Boolean
+  sumber       String
+  verifikasi   Verifikasi @default(OK)
+  keputusan    String? // null | DIJADIKAN_TUNGGAKAN | DIABAIKAN
+  rumah        Rumah      @relation(fields: [rumahId], references: [id])
+
+  @@unique([rumahId, periode, kodeKomponen, sumber])
+}
+
+// ───────────── Kebijakan iuran ─────────────
+
+model Dana {
+  id       Int             @id @default(autoincrement())
+  kode     String          @unique
+  nama     String
+  aktif    Boolean         @default(true)
+  publik   Boolean         @default(true) // tampil di ringkasan warga
+  komponen KomponenIuran[]
+  ledger   LedgerEntry[]
+}
+
+model Kebijakan {
+  id           Int             @id @default(autoincrement())
+  nama         String
+  berlakuMulai String          @unique // "YYYY-MM"
+  catatan      String?
+  createdById  Int?
+  createdAt    DateTime        @default(now())
+  komponen     KomponenIuran[]
+  tagihan      Tagihan[]
+}
+
+model KomponenIuran {
+  id          Int       @id @default(autoincrement())
+  kebijakanId Int
+  kode        String // stabil antar versi, mis. "SAMPAH"
+  nama        String
+  nominal     Int
+  danaId      Int
+  aktif       Boolean   @default(true)
+  urutan      Int       @default(0)
+  kebijakan   Kebijakan @relation(fields: [kebijakanId], references: [id], onDelete: Cascade)
+  dana        Dana      @relation(fields: [danaId], references: [id])
+
+  @@unique([kebijakanId, kode])
+}
+
+// ───────────── Tagihan ─────────────
+
+enum StatusTagihan {
+  BELUM
+  SEBAGIAN
+  LUNAS
+  DIBATALKAN
+}
+
+model Tagihan {
+  id          Int           @id @default(autoincrement())
+  rumahId     Int
+  periode     String
+  kebijakanId Int?
+  total       Int
+  terbayar    Int           @default(0)
+  status      StatusTagihan @default(BELUM)
+  sumber      String        @default("SISTEM")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  rumah       Rumah         @relation(fields: [rumahId], references: [id])
+  kebijakan   Kebijakan?    @relation(fields: [kebijakanId], references: [id])
+  items       TagihanItem[]
+
+  @@unique([rumahId, periode])
+  @@index([status])
+}
+
+model TagihanItem {
+  id           Int                 @id @default(autoincrement())
+  tagihanId    Int
+  kodeKomponen String
+  nama         String
+  nominal      Int
+  danaId       Int
+  terbayar     Int                 @default(0)
+  urutan       Int                 @default(0)
+  tagihan      Tagihan             @relation(fields: [tagihanId], references: [id], onDelete: Cascade)
+  alokasi      AlokasiPembayaran[]
+}
+
+// ───────────── Pembayaran ─────────────
+
+enum MetodeBayar {
+  TUNAI
+  TRANSFER
+  MIDTRANS
+}
+
+enum StatusBayar {
+  MENUNGGU
+  DITOLAK
+  DIPOSTING
+  DIBATALKAN
+}
+
+model Pembayaran {
+  id                 Int                 @id @default(autoincrement())
+  nomor              String              @unique
+  rumahId            Int
+  metode             MetodeBayar
+  nominal            Int
+  tanggal            DateTime            @default(now())
+  status             StatusBayar         @default(MENUNGGU)
+  catatan            String?
+  alasanTolak        String?
+  buktiFileId        Int?
+  dibuatOlehId       Int?
+  diverifikasiOlehId Int?
+  diverifikasiAt     DateTime?
+  createdAt          DateTime            @default(now())
+  rumah              Rumah               @relation(fields: [rumahId], references: [id])
+  bukti              FileUpload?         @relation(fields: [buktiFileId], references: [id])
+  alokasi            AlokasiPembayaran[]
+  midtrans           MidtransTransaksi?
+}
+
+model AlokasiPembayaran {
+  id            Int         @id @default(autoincrement())
+  pembayaranId  Int
+  tagihanItemId Int
+  nominal       Int
+  pembayaran    Pembayaran  @relation(fields: [pembayaranId], references: [id])
+  tagihanItem   TagihanItem @relation(fields: [tagihanItemId], references: [id])
+}
+
+model MidtransTransaksi {
+  id            Int         @id @default(autoincrement())
+  orderId       String      @unique
+  rumahId       Int
+  pembayaranId  Int?        @unique
+  grossAmount   Int
+  snapToken     String?
+  status        String      @default("pending")
+  transactionId String?
+  paymentType   String?
+  settlementAt  DateTime?
+  fee           Int?
+  raw           Json?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  pembayaran    Pembayaran? @relation(fields: [pembayaranId], references: [id])
+}
+
+// ───────────── Buku kas ─────────────
+
+enum Arah {
+  MASUK
+  KELUAR
+}
+
+model LedgerEntry {
+  id          Int      @id @default(autoincrement())
+  tanggal     DateTime @default(now())
+  danaId      Int
+  arah        Arah
+  nominal     Int
+  jenis       String // SALDO_AWAL | IURAN | PENGELUARAN | BIAYA_MIDTRANS | PEMBALIK | LAINNYA
+  sumberTipe  String? // PEMBAYARAN | PENGELUARAN | MANUAL
+  sumberId    Int?
+  membalikId  Int?     @unique
+  keterangan  String?
+  dibuatOlehId Int?
+  createdAt   DateTime @default(now())
+  dana        Dana     @relation(fields: [danaId], references: [id])
+
+  @@index([danaId, tanggal])
+  @@index([sumberTipe, sumberId])
+}
+
+// ───────────── Pengeluaran ─────────────
+
+enum StatusPengeluaran {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
+  CANCELLED
+}
+
+model Pengeluaran {
+  id              Int               @id @default(autoincrement())
+  nomor           String            @unique
+  danaId          Int
+  kategori        String
+  nominal         Int
+  alasan          String
+  status          StatusPengeluaran @default(DRAFT)
+  lampiranFileId  Int?
+  buktiFileId     Int?
+  alasanTolak     String?
+  dibuatOlehId    Int
+  disetujuiOlehId Int?
+  disetujuiAt     DateTime?
+  dibayarAt       DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+// ───────────── Pendukung ─────────────
+
+model FileUpload {
+  id           Int          @id @default(autoincrement())
+  path         String
+  namaAsli     String
+  mime         String
+  ukuran       Int
+  sha256       String
+  uploadedById Int?
+  rumahId      Int? // pemilik (untuk akses warga)
+  createdAt    DateTime     @default(now())
+  pembayaran   Pembayaran[]
+}
+
+model WaPesan {
+  id          Int       @id @default(autoincrement())
+  tujuan      String
+  jenis       String
+  isi         String
+  status      String    @default("ANTRI") // ANTRI | TERKIRIM | GAGAL
+  percobaan   Int       @default(0)
+  error       String?
+  nextRetryAt DateTime  @default(now())
+  rumahId     Int?
+  refKey      String?   @unique // cegah pesan ganda
+  createdAt   DateTime  @default(now())
+  sentAt      DateTime?
+
+  @@index([status, nextRetryAt])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  aksi      String
+  entitas   String
+  entitasId String?
+  data      Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([entitas, entitasId])
+  @@index([createdAt])
+}
+
+model Pengaturan {
+  key   String @id
+  value String
+}
+
+model Counter {
+  key   String @id
+  value Int    @default(0)
+}

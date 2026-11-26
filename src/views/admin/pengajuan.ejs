@@ -1,0 +1,21 @@
+<%- include('../partials/head') %>
+<h1 class="h4">Pengajuan perubahan dari warga</h1>
+<div class="card"><div class="table-responsive"><table class="table table-sm m-0">
+  <thead><tr><th>Tanggal</th><th>Rumah</th><th>Data sekarang</th><th>Diajukan</th><th>Alasan</th><th>Status</th></tr></thead><tbody>
+  <% list.forEach(p => { const now = p.rumah.penghunian[0]; %>
+    <tr>
+      <td class="small"><%= u.waktu(p.createdAt) %></td>
+      <td><a href="/admin/rumah/<%= p.rumahId %>"><%= p.rumah.kode %></a></td>
+      <td class="small"><%= now ? now.nama : '-' %><br><%= now?.noWa || '' %></td>
+      <td class="small"><%= p.namaBaru || '(nama tetap)' %><br><%= p.noWaBaru || '(WA tetap)' %></td>
+      <td class="small"><%= p.alasan || '' %></td>
+      <td><% if (p.status === 'PENDING' && can('pengajuan.putuskan')) { %>
+        <form method="post" action="/admin/pengajuan/<%= p.id %>" class="d-flex gap-1"><%- include('../partials/csrf') %>
+          <button name="aksi" value="setuju" class="btn btn-sm btn-success">Setujui</button>
+          <button name="aksi" value="tolak" class="btn btn-sm btn-outline-danger">Tolak</button></form>
+      <% } else { %><span class="badge text-bg-<%= p.status === 'DISETUJUI' ? 'success' : p.status === 'DITOLAK' ? 'secondary' : 'warning' %>"><%= p.status %></span><% } %></td>
+    </tr>
+  <% }) %>
+  <% if (!list.length) { %><tr><td colspan="6" class="text-muted">Belum ada pengajuan.</td></tr><% } %>
+</tbody></table></div></div>
+<%- include('../partials/foot') %>

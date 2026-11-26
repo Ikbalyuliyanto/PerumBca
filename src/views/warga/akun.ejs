@@ -1,0 +1,5 @@
+<%- include('../partials/head') %>
+<h1 class="h4">Rumah saya</h1>
+<% if (!rumah.length) { %><p class="text-muted">Akun ini belum terhubung ke rumah. Hubungi pengurus.</p><% } %>
+<div class="list-group"><% rumah.forEach(r => { %><a class="list-group-item list-group-item-action" href="/r/<%= r.token %>">Rumah <%= r.kode %></a><% }) %></div>
+<%- include('../partials/foot') %>

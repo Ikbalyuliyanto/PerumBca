@@ -1,0 +1,33 @@
+<%- include('../partials/head') %>
+<h1 class="h4">Akun pengguna</h1>
+<div class="card p-3 mb-3">
+  <h2 class="h6">Akun baru</h2>
+  <form method="post" action="/admin/users" class="row g-2">
+    <%- include('../partials/csrf') %>
+    <div class="col-md-2"><input name="username" class="form-control form-control-sm" placeholder="username" required autocapitalize="none"></div>
+    <div class="col-md-3"><input name="nama" class="form-control form-control-sm" placeholder="Nama lengkap" required></div>
+    <div class="col-md-2"><input name="noWa" class="form-control form-control-sm" placeholder="No. WA"></div>
+    <div class="col-md-3"><input name="password" type="password" minlength="10" class="form-control form-control-sm" placeholder="Password awal (min 10)" required autocomplete="new-password"></div>
+    <div class="col-md-2"><button class="btn btn-sm btn-brand w-100">Buat akun</button></div>
+    <div class="col-12 small">Role: <% roles.forEach(r => { %><label class="ms-2"><input type="checkbox" name="roles" value="<%= r.id %>"> <%= r.nama %></label><% }) %></div>
+    <div class="col-12 small">Rumah (untuk akun warga): <select name="rumah" multiple class="form-select form-select-sm d-inline-block" style="width:auto;height:4.5em"><% rumah.forEach(x => { %><option value="<%= x.id %>"><%= x.kode %></option><% }) %></select></div>
+  </form>
+</div>
+<% users.forEach(us => { const rids = us.roles.map(r => r.roleId); const hs = us.rumah.map(r => r.rumahId); const locked = us.isSuperAdmin && us.id !== user.id; %>
+<div class="card p-3 mb-2 <%= us.isSuperAdmin ? 'border border-warning' : '' %>">
+  <form method="post" action="/admin/users/<%= us.id %>" class="row g-2 align-items-center">
+    <%- include('../partials/csrf') %>
+    <div class="col-md-2"><b><%= us.username %></b><% if (us.isSuperAdmin) { %> <span class="badge text-bg-warning">Super Admin</span><% } %><br><span class="small text-muted">login: <%= u.waktu(us.lastLoginAt) %></span></div>
+    <div class="col-md-3"><input name="nama" value="<%= us.nama %>" class="form-control form-control-sm" <%= locked ? 'disabled' : '' %>></div>
+    <div class="col-md-2"><input name="noWa" value="<%= us.noWa || '' %>" class="form-control form-control-sm" placeholder="WA" <%= locked ? 'disabled' : '' %>></div>
+    <div class="col-md-2"><input name="password" type="password" class="form-control form-control-sm" placeholder="reset password" autocomplete="new-password" <%= locked ? 'disabled' : '' %>></div>
+    <div class="col-md-1 small"><% if (!us.isSuperAdmin) { %><label><input type="checkbox" name="aktif" <%= us.aktif ? 'checked' : '' %>> aktif</label><% } %></div>
+    <div class="col-md-2"><% if (!locked) { %><button class="btn btn-sm btn-outline-primary w-100">Simpan</button><% } %></div>
+    <% if (!us.isSuperAdmin) { %>
+    <div class="col-12 small">Role: <% roles.forEach(r => { %><label class="ms-2"><input type="checkbox" name="roles" value="<%= r.id %>" <%= rids.includes(r.id) ? 'checked' : '' %>> <%= r.nama %></label><% }) %>
+      · Rumah: <select name="rumah" multiple class="form-select form-select-sm d-inline-block align-middle" style="width:auto;height:3.2em"><% rumah.forEach(x => { %><option value="<%= x.id %>" <%= hs.includes(x.id) ? 'selected' : '' %>><%= x.kode %></option><% }) %></select></div>
+    <% } %>
+  </form>
+</div>
+<% }) %>
+<%- include('../partials/foot') %>

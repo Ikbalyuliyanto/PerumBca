@@ -1,0 +1,25 @@
+<%- include('../partials/head') %>
+<h1 class="h4">WhatsApp</h1>
+<div class="card p-3 mb-3">
+  <div class="d-flex flex-wrap justify-content-between gap-2">
+    <div>Provider: <b><%= st.provider %></b> · <span class="<%= st.connected ? 'text-success' : 'text-warning' %>"><%= st.connected ? 'Terhubung' : 'Tidak terhubung' %></span> — <%= st.info %></div>
+    <form method="post" action="/admin/wa/pengingat" data-confirm="Antrekan pengingat ke semua rumah yang menunggak?"><%- include('../partials/csrf') %><button class="btn btn-sm btn-outline-primary">Kirim pengingat tunggakan sekarang</button></form>
+  </div>
+  <% if (st.qr) { %><div class="alert alert-warning mt-2 small mb-0">Scan QR WhatsApp: jalankan <code>docker logs -f perumbca-app</code> di STB, lalu scan dari HP (Perangkat tertaut).</div><% } %>
+  <% if (st.provider === 'none') { %><div class="small text-muted mt-2">Mode manual: pesan tetap antre. Klik <b>Kirim via wa.me</b> untuk mengirim dari HP/WA Web, lalu tandai terkirim. Aktifkan otomatis dengan <code>WA_PROVIDER=baileys</code>.</div><% } %>
+</div>
+<form class="d-flex gap-2 mb-2" method="get"><select name="status" class="form-select form-select-sm" style="width:auto"><option value="">Semua</option><% ['ANTRI','TERKIRIM','GAGAL'].forEach(s => { %><option <%= query.status === s ? 'selected' : '' %>><%= s %></option><% }) %></select><button class="btn btn-sm btn-outline-secondary">Filter</button></form>
+<div class="card"><div class="table-responsive"><table class="table table-sm small m-0">
+  <thead><tr><th>Waktu</th><th>Tujuan</th><th>Jenis</th><th>Isi</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
+  <% list.forEach(m => { %><tr>
+    <td class="text-nowrap"><%= u.waktu(m.createdAt) %></td><td><%= m.tujuan %></td><td><%= m.jenis %></td><td style="max-width:380px"><%= m.isi %></td>
+    <td><span class="badge text-bg-<%= {ANTRI:'warning',TERKIRIM:'success',GAGAL:'danger'}[m.status] %>"><%= m.status %></span><% if (m.percobaan) { %> <span class="text-muted">×<%= m.percobaan %></span><% } %><% if (m.error) { %><br><span class="text-danger"><%= m.error %></span><% } %></td>
+    <td class="text-nowrap">
+      <% if (m.status === 'ANTRI') { %><a class="btn btn-sm btn-success py-0" href="<%= waMeUrl(m) %>" target="_blank" rel="noopener">Kirim via wa.me</a>
+        <form method="post" action="/admin/wa/<%= m.id %>/manual" class="d-inline"><%- include('../partials/csrf') %><button class="btn btn-sm btn-link py-0">tandai terkirim</button></form>
+        <form method="post" action="/admin/wa/<%= m.id %>/batal" class="d-inline"><%- include('../partials/csrf') %><button class="btn btn-sm btn-link text-danger py-0">batal</button></form><% } %>
+      <% if (m.status === 'GAGAL') { %><form method="post" action="/admin/wa/<%= m.id %>/retry" class="d-inline"><%- include('../partials/csrf') %><button class="btn btn-sm btn-outline-warning py-0">Ulangi</button></form><% } %>
+    </td></tr><% }) %>
+  <% if (!list.length) { %><tr><td colspan="6" class="text-muted">Belum ada pesan.</td></tr><% } %>
+</tbody></table></div></div>
+<%- include('../partials/foot') %>

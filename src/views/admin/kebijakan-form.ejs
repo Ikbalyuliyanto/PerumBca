@@ -1,0 +1,34 @@
+<%- include('../partials/head') %>
+<h1 class="h4">Versi kebijakan iuran baru</h1>
+<div class="card p-3">
+<form method="post" action="/admin/kebijakan">
+  <%- include('../partials/csrf') %>
+  <div class="row g-2 mb-3">
+    <div class="col-md-5"><label class="form-label">Nama</label><input name="nama" class="form-control" required value="Kebijakan <%= u.periodeLabel(u.periodeNow()) %>"></div>
+    <div class="col-md-3"><label class="form-label">Berlaku mulai</label><input type="month" name="berlakuMulai" class="form-control" required value="<%= u.addPeriode(u.periodeNow(), 1) %>"></div>
+    <div class="col-md-4"><label class="form-label">Catatan / dasar keputusan</label><input name="catatan" class="form-control" placeholder="mis. hasil rapat warga"></div>
+  </div>
+  <table class="table table-sm"><thead><tr><th>Kode</th><th>Nama komponen</th><th>Dana tujuan</th><th>Nominal</th><th>Aktif</th></tr></thead>
+  <tbody id="komponen-body">
+    <% (dasar ? dasar.komponen : []).forEach(k => { %>
+    <tr>
+      <td><input name="k_kode" value="<%= k.kode %>" class="form-control form-control-sm" required></td>
+      <td><input name="k_nama" value="<%= k.nama %>" class="form-control form-control-sm" required></td>
+      <td><select name="k_dana" class="form-select form-select-sm"><% dana.forEach(d => { %><option value="<%= d.id %>" <%= d.id === k.danaId ? 'selected' : '' %>><%= d.nama %></option><% }) %></select></td>
+      <td><input name="k_nominal" value="<%= k.nominal.toLocaleString('id-ID') %>" data-money class="form-control form-control-sm" required></td>
+      <td><input type="checkbox" name="k_aktif" value="<%= k.kode %>" <%= k.aktif ? 'checked' : '' %>></td>
+    </tr>
+    <% }) %>
+  </tbody></table>
+  <template id="komponen-tpl"><tr>
+    <td><input name="k_kode" class="form-control form-control-sm" placeholder="KODE"></td>
+    <td><input name="k_nama" class="form-control form-control-sm"></td>
+    <td><select name="k_dana" class="form-select form-select-sm"><% dana.forEach(d => { %><option value="<%= d.id %>"><%= d.nama %></option><% }) %></select></td>
+    <td><input name="k_nominal" class="form-control form-control-sm" value="0"></td>
+    <td><input type="checkbox" name="k_aktif" value="" checked></td>
+  </tr></template>
+  <button type="button" id="add-komponen" class="btn btn-sm btn-outline-secondary mb-3">+ Komponen</button>
+  <div><button class="btn btn-brand">Simpan kebijakan</button></div>
+</form>
+</div>
+<%- include('../partials/foot') %>

@@ -1,0 +1,19 @@
+<%- include('../partials/head') %>
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h1 class="h4 m-0">Pembayaran</h1>
+  <% if (can('pembayaran.input')) { %><a href="/admin/pembayaran/baru" class="btn btn-sm btn-brand"><i class="bi bi-plus"></i> Pembayaran tunai</a><% } %>
+</div>
+<form class="d-flex flex-wrap gap-2 mb-3" method="get">
+  <select name="status" class="form-select form-select-sm" style="width:auto"><option value="">Semua status</option><% ['MENUNGGU','DIPOSTING','DITOLAK','DIBATALKAN'].forEach(s => { %><option <%= query.status === s ? 'selected' : '' %>><%= s %></option><% }) %></select>
+  <select name="metode" class="form-select form-select-sm" style="width:auto"><option value="">Semua metode</option><% ['TUNAI','TRANSFER','MIDTRANS'].forEach(s => { %><option <%= query.metode === s ? 'selected' : '' %>><%= s %></option><% }) %></select>
+  <button class="btn btn-sm btn-outline-secondary">Filter</button>
+</form>
+<div class="card"><div class="table-responsive"><table class="table table-sm table-hover m-0">
+  <thead><tr><th>Nomor</th><th>Tanggal</th><th>Rumah</th><th>Metode</th><th class="text-end">Nominal</th><th>Status</th></tr></thead><tbody>
+  <% list.forEach(p => { %>
+    <tr><td><a href="/admin/pembayaran/<%= p.id %>"><%= p.nomor %></a></td><td class="small"><%= u.tanggal(p.tanggal) %></td><td><%= p.rumah.kode %></td><td><%= p.metode %></td><td class="text-end money"><%= u.rupiah(p.nominal) %></td>
+      <td><span class="badge text-bg-<%= {DIPOSTING:'success',MENUNGGU:'warning',DITOLAK:'secondary',DIBATALKAN:'dark'}[p.status] %>"><%= p.status %></span><% if (p.catatan && p.catatan.includes('PERLU ALOKASI MANUAL')) { %> <span class="badge text-bg-danger">alokasi manual</span><% } %></td></tr>
+  <% }) %>
+  <% if (!list.length) { %><tr><td colspan="6" class="text-muted">Belum ada.</td></tr><% } %>
+</tbody></table></div></div>
+<%- include('../partials/foot') %>
