@@ -124,3 +124,10 @@
   if (all) all.addEventListener('click', function () { toggle('input[name="p"]'); });
   hitung();
 })();
+
+// Tooltip & popover Bootstrap
+(function () {
+  if (!window.bootstrap) return;
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) { new bootstrap.Tooltip(el); });
+  document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (el) { new bootstrap.Popover(el); });
+})();

@@ -101,3 +101,13 @@ a { text-decoration: none; }
 .bulan-grid span { padding: 2px 0; border-radius: 4px; background: #e9ecef; }
 .bulan-grid span.ok { background: #a3d9a5; }
 @media print { .sidebar, .topbar, .footer, .no-print { display: none !important; } .has-sidebar .main { margin: 0; } body { background: #fff; } .card { box-shadow: none; border: 0; } }
+
+/* Kartu rumah ringkas di halaman Bayar */
+.house-card { flex-direction: row; display: flex; align-items: center; gap: .75rem; padding: .65rem .85rem; }
+.house-chk { flex: none; width: 1.2em; height: 1.2em; margin: 0; }
+.min-w-0 { min-width: 0; }
+.mark { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; font-size: .8rem; font-weight: 700; cursor: help; }
+.mark-LUNAS { background: #dcfce7; color: #15803d; }
+.mark-BELUM { background: #fee2e2; color: #b91c1c; }
+.mark-SEBAGIAN { background: #fef3c7; color: #b45309; }
+.mark-BEBAS { background: #f1f5f9; color: #94a3b8; }
