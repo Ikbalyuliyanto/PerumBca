@@ -1,145 +1,137 @@
 <%- include('../partials/head') %>
-<% const aktif = rumah.penghunian.find(p => !p.selesai); const komp = kebijakan ? kebijakan.komponen : []; %>
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-  <div>
-    <a href="/admin/rumah" class="small text-muted">&larr; Data rumah</a>
-    <h1 class="h4 m-0">Rumah <%= rumah.kode %> <span class="badge kondisi-<%= statusKini.kondisi %> fs-6 align-middle"><%= statusKini.kondisi.replace('_',' ') %></span>
-      <% if (rumah.verifikasi === 'PERLU_VERIFIKASI') { %><span class="badge text-bg-danger fs-6 align-middle">PERLU VERIFIKASI</span><% } %></h1>
-    <div class="text-muted small">No. urut sumber: <%= rumah.noUrutSumber || '-' %><% if (rumah.catatan) { %> · <%= rumah.catatan %><% } %></div>
-  </div>
-  <div class="d-flex gap-2">
-    <% if (can('pembayaran.input')) { %><a href="/admin/pembayaran/baru?rumah=<%= rumah.id %>" class="btn btn-brand btn-sm"><i class="bi bi-cash"></i> Input pembayaran</a><% } %>
-  </div>
+<% const aktif = rumah.penghunian.find(p => !p.selesai); const komp = kebijakan ? kebijakan.komponen : [];
+   const totalTunggak = tagihan.filter(t => ['BELUM','SEBAGIAN'].includes(t.status)).reduce((s, t) => s + t.total - t.terbayar, 0);
+   const labelK = {AKTIF:'Ada penghuni',KOSONG:'Kosong',TIDAK_DITEMPATI:'Tidak ditempati',PIHAK_KEDUA:'Pihak kedua'}; %>
+<div class="page-head">
+  <div><a href="/admin/rumah" class="small text-muted"><i class="bi bi-arrow-left"></i> Data Warga</a>
+    <h1>Rumah <%= rumah.kode %> <span class="badge kondisi-<%= statusKini.kondisi %> fs-6 align-middle"><%= labelK[statusKini.kondisi] %></span></h1>
+    <div class="sub"><%= aktif ? aktif.nama : 'Belum ada penghuni' %><% if (aktif && aktif.noWa) { %> · <i class="bi bi-whatsapp text-success"></i> <%= aktif.noWa %><% } %></div></div>
+  <% if (can('pembayaran.input')) { %><a href="/admin/bayar/<%= rumah.id %>" class="btn btn-brand"><i class="bi bi-cash-coin"></i> Bayar iuran</a><% } %>
+</div>
+
+<% if (rumah.verifikasi === 'PERLU_VERIFIKASI') { %>
+<div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2">
+  <div><i class="bi bi-exclamation-triangle-fill"></i> <b>Data perlu dicek.</b> <%= rumah.catatan || '' %></div>
+  <% if (can('rumah.kelola') || can('impor.kelola')) { %>
+  <form method="post" action="/admin/rumah/<%= rumah.id %>/verifikasi" class="m-0"><%- include('../partials/csrf') %><input type="hidden" name="verifikasi" value="OK"><input type="hidden" name="catatan" value="<%= rumah.catatan || '' %>"><button class="btn btn-sm btn-success"><i class="bi bi-check2"></i> Data sudah benar</button></form>
+  <% } %>
+</div>
+<% } %>
+
+<div class="row g-3 mb-3">
+  <div class="col-sm-4"><div class="card stat"><div class="ico <%= totalTunggak ? 'ico-red' : 'ico-green' %>"><i class="bi bi-wallet2"></i></div><div><div class="val money"><%= totalTunggak ? u.rupiah(totalTunggak) : 'Lunas' %></div><div class="lbl">Tunggakan</div></div></div></div>
+  <div class="col-sm-4"><div class="card stat"><div class="ico ico-blue"><i class="bi bi-receipt"></i></div><div><div class="val"><%= pembayaran.filter(p => p.status === 'DIPOSTING').length %></div><div class="lbl">Pembayaran tercatat</div></div></div></div>
+  <div class="col-sm-4"><div class="card stat"><div class="ico ico-violet"><i class="bi bi-people"></i></div><div><div class="val"><%= rumah.penghunian.length %></div><div class="lbl">Riwayat penghuni</div></div></div></div>
 </div>
 
 <div class="row g-3">
 <div class="col-lg-5">
-  <div class="card p-3 mb-3">
-    <h2 class="h6">Penghuni</h2>
-    <% if (aktif) { %>
-      <% if (can('rumah.kelola')) { %>
-      <form method="post" action="/admin/rumah/<%= rumah.id %>/penghuni/<%= aktif.id %>" class="row g-2">
-        <%- include('../partials/csrf') %>
-        <div class="col-12"><label class="form-label small mb-0">Nama</label><input name="nama" value="<%= aktif.nama %>" class="form-control form-control-sm" required></div>
-        <div class="col-7"><label class="form-label small mb-0">WhatsApp</label><input name="noWa" value="<%= aktif.noWa || '' %>" class="form-control form-control-sm" placeholder="08xxxx"></div>
-        <div class="col-5"><label class="form-label small mb-0">Data</label><select name="verifikasi" class="form-select form-select-sm"><option <%= aktif.verifikasi==='OK'?'selected':'' %>>OK</option><option <%= aktif.verifikasi!=='OK'?'selected':'' %>>PERLU_VERIFIKASI</option></select></div>
-        <div class="col-12"><button class="btn btn-sm btn-outline-primary">Simpan koreksi</button> <span class="small text-muted">Untuk salah ketik. Pergantian penghuni pakai form di bawah.</span></div>
+  <% if (can('rumah.kelola')) { %>
+  <div class="card mb-3">
+    <div class="card-head"><h2>Data penghuni</h2></div>
+    <div class="card-body">
+      <% if (aktif) { %>
+      <form method="post" action="/admin/rumah/<%= rumah.id %>/penghuni/<%= aktif.id %>">
+        <%- include('../partials/csrf') %><input type="hidden" name="verifikasi" value="OK">
+        <div class="mb-2"><label class="form-label small">Nama</label><input name="nama" value="<%= aktif.nama %>" class="form-control" required></div>
+        <div class="mb-3"><label class="form-label small">No. WhatsApp</label><input name="noWa" value="<%= aktif.noWa || '' %>" class="form-control" placeholder="08xxxxxxxxxx" inputmode="tel"></div>
+        <button class="btn btn-brand btn-sm"><i class="bi bi-save"></i> Simpan</button>
       </form>
-      <% } else { %><div><%= aktif.nama %> · <%= aktif.noWa || 'tanpa WA' %></div><% } %>
-    <% } else { %><p class="text-muted">Belum ada penghuni tercatat.</p><% } %>
-    <% if (can('rumah.kelola')) { %>
-    <details class="mt-3"><summary class="small">Ganti penghuni (riwayat lama disimpan)</summary>
-      <form method="post" action="/admin/rumah/<%= rumah.id %>/penghuni" class="row g-2 mt-1">
+      <% } %>
+      <details class="mt-3" <%= aktif ? '' : 'open' %>><summary class="small fw-semibold"><%= aktif ? 'Penghuni pindah / ganti orang?' : 'Isi penghuni' %></summary>
+        <form method="post" action="/admin/rumah/<%= rumah.id %>/penghuni" class="mt-2">
+          <%- include('../partials/csrf') %>
+          <div class="mb-2"><input name="nama" class="form-control form-control-sm" placeholder="Nama penghuni baru" required></div>
+          <div class="mb-2"><input name="noWa" class="form-control form-control-sm" placeholder="No. WA" inputmode="tel"></div>
+          <button class="btn btn-sm btn-light">Simpan penghuni baru</button>
+          <div class="small text-muted mt-1">Penghuni lama tetap tersimpan di riwayat, pembayaran rumah tidak hilang.</div>
+        </form>
+      </details>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-head"><h2>Status rumah</h2></div>
+    <div class="card-body">
+      <form method="post" action="/admin/rumah/<%= rumah.id %>/status">
         <%- include('../partials/csrf') %>
-        <div class="col-12"><input name="nama" class="form-control form-control-sm" placeholder="Nama penghuni baru" required></div>
-        <div class="col-6"><input name="noWa" class="form-control form-control-sm" placeholder="No. WA"></div>
-        <div class="col-6"><input type="date" name="mulai" class="form-control form-control-sm"></div>
-        <div class="col-12"><button class="btn btn-sm btn-outline-secondary">Catat penghuni baru</button></div>
+        <div class="row g-2 mb-2">
+          <div class="col-7"><select name="kondisi" class="form-select form-select-sm"><% Object.entries(labelK).forEach(([k, l]) => { %><option value="<%= k %>" <%= statusKini.kondisi === k ? 'selected' : '' %>><%= l %></option><% }) %></select></div>
+          <div class="col-5"><input type="month" name="berlakuMulai" value="<%= u.periodeNow() %>" class="form-control form-control-sm" required title="Berlaku mulai"></div>
+        </div>
+        <div class="small mb-2">Kalau bukan "Ada penghuni", iuran yang tetap dibayar:<br>
+          <% komp.forEach(k => { %><label class="me-3"><input type="checkbox" class="form-check-input" name="komponenWajib" value="<%= k.kode %>" <%= (statusKini.komponenWajib || []).includes(k.kode) ? 'checked' : '' %>> <%= k.nama %></label><% }) %></div>
+        <button class="btn btn-sm btn-light"><i class="bi bi-save"></i> Simpan status</button>
       </form>
-    </details>
-    <% } %>
-    <% const lama = rumah.penghunian.filter(p => p.selesai); if (lama.length) { %>
-      <h3 class="h6 mt-3 small text-muted">Riwayat penghuni</h3>
-      <ul class="small mb-0"><% lama.forEach(p => { %><li><%= p.nama %> (<%= u.tanggal(p.mulai) %> – <%= u.tanggal(p.selesai) %>)</li><% }) %></ul>
-    <% } %>
-  </div>
-
-  <div class="card p-3 mb-3">
-    <h2 class="h6">Status &amp; kewajiban</h2>
-    <table class="table table-sm small"><thead><tr><th>Mulai</th><th>Status</th><th>Komponen wajib</th></tr></thead><tbody>
-      <% rumah.status.forEach(s => { %><tr><td><%= s.berlakuMulai %></td><td><span class="badge kondisi-<%= s.kondisi %>"><%= s.kondisi %></span></td><td><%= s.kondisi === 'AKTIF' ? 'Semua' : (s.komponenWajib.length ? s.komponenWajib.join(', ') : 'Bebas') %></td></tr><% }) %>
-      <% if (!rumah.status.length) { %><tr><td colspan="3" class="text-muted">Belum ada (dianggap AKTIF)</td></tr><% } %>
-    </tbody></table>
-    <% if (can('rumah.kelola')) { %>
-    <form method="post" action="/admin/rumah/<%= rumah.id %>/status" class="row g-2">
-      <%- include('../partials/csrf') %>
-      <div class="col-6"><select name="kondisi" class="form-select form-select-sm"><% ['AKTIF','KOSONG','TIDAK_DITEMPATI','PIHAK_KEDUA'].forEach(k => { %><option><%= k %></option><% }) %></select></div>
-      <div class="col-6"><input type="month" name="berlakuMulai" value="<%= u.periodeNow() %>" class="form-control form-control-sm" required></div>
-      <div class="col-12 small">Bila bukan AKTIF, komponen yang tetap wajib dibayar:
-        <% komp.forEach(k => { %><label class="ms-2"><input type="checkbox" name="komponenWajib" value="<%= k.kode %>"> <%= k.nama %></label><% }) %>
-        <div class="text-muted">Tidak dicentang = bebas (tidak dibuat tagihan). Nominal mengikuti kebijakan umum.</div></div>
-      <div class="col-12"><input name="catatan" class="form-control form-control-sm" placeholder="Catatan / dasar keputusan"></div>
-      <div class="col-12"><button class="btn btn-sm btn-outline-primary">Simpan status</button></div>
-    </form>
-    <% } %>
-  </div>
-
-  <% if (linkWarga) { %>
-  <div class="card p-3 mb-3">
-    <h2 class="h6">Link tagihan warga</h2>
-    <div class="input-group input-group-sm"><input class="form-control" value="<%= linkWarga %>" readonly><button type="button" class="btn btn-outline-secondary" data-copy="<%= linkWarga %>">Salin</button></div>
-    <% if (can('rumah.kelola')) { %>
-    <form method="post" action="/admin/rumah/<%= rumah.id %>/cabut-link" class="mt-2" data-confirm="Link lama tidak akan bisa dipakai lagi. Lanjutkan?"><%- include('../partials/csrf') %><button class="btn btn-sm btn-outline-danger">Cabut &amp; buat link baru</button></form>
-    <% } %>
+    </div>
   </div>
   <% } %>
 
-  <% if (can('rumah.kelola') || can('impor.kelola')) { %>
-  <div class="card p-3 mb-3">
-    <h2 class="h6">Verifikasi data</h2>
-    <form method="post" action="/admin/rumah/<%= rumah.id %>/verifikasi" class="row g-2">
-      <%- include('../partials/csrf') %>
-      <div class="col-12"><textarea name="catatan" class="form-control form-control-sm" rows="2"><%= rumah.catatan || '' %></textarea></div>
-      <div class="col-7"><select name="verifikasi" class="form-select form-select-sm"><option <%= rumah.verifikasi==='OK'?'selected':'' %>>OK</option><option <%= rumah.verifikasi!=='OK'?'selected':'' %>>PERLU_VERIFIKASI</option></select></div>
-      <div class="col-5"><button class="btn btn-sm btn-outline-primary w-100">Simpan</button></div>
-    </form>
-  </div>
+  <% const lama = rumah.penghunian.filter(p => p.selesai); if (lama.length) { %>
+  <div class="card mb-3"><div class="card-head"><h2>Penghuni sebelumnya</h2></div>
+    <ul class="list-group list-group-flush small"><% lama.forEach(p => { %><li class="list-group-item"><%= p.nama %> <span class="text-muted">(<%= u.tanggal(p.mulai) %> – <%= u.tanggal(p.selesai) %>)</span></li><% }) %></ul></div>
   <% } %>
 
-  <% if (user.isSuperAdmin) { %>
-  <div class="card p-3 mb-3 border border-warning">
-    <h2 class="h6">Identitas rumah <span class="badge text-bg-warning">Super Admin</span></h2>
-    <form method="post" action="/admin/rumah/<%= rumah.id %>/identitas" class="row g-2" data-confirm="Ubah identitas rumah? Riwayat tetap melekat pada rumah ini.">
-      <%- include('../partials/csrf') %>
-      <div class="col-4"><input name="blok" value="<%= rumah.blok.kode %>" class="form-control form-control-sm" required></div>
-      <div class="col-4"><input name="nomor" value="<%= rumah.nomor %>" class="form-control form-control-sm" required></div>
-      <div class="col-4 small"><label><input type="checkbox" name="aktif" <%= rumah.aktif ? 'checked' : '' %>> Aktif</label></div>
-      <div class="col-12"><button class="btn btn-sm btn-warning">Simpan identitas</button></div>
-    </form>
-  </div>
-  <% } %>
+  <details class="card mb-3"><summary class="card-head" style="cursor:pointer"><span class="fw-semibold">Lainnya</span></summary>
+    <div class="card-body">
+      <% if (linkWarga) { %>
+        <div class="small fw-semibold mb-1">Link tagihan untuk warga</div>
+        <div class="input-group input-group-sm mb-2"><input class="form-control" value="<%= linkWarga %>" readonly><button type="button" class="btn btn-light" data-copy="<%= linkWarga %>">Salin</button></div>
+        <% if (can('rumah.kelola')) { %><form method="post" action="/admin/rumah/<%= rumah.id %>/cabut-link" data-confirm="Link lama tidak bisa dipakai lagi. Lanjutkan?" class="mb-3"><%- include('../partials/csrf') %><button class="btn btn-sm btn-outline-danger">Ganti link</button></form><% } %>
+      <% } %>
+      <% if (can('rumah.kelola') || can('impor.kelola')) { %>
+        <form method="post" action="/admin/rumah/<%= rumah.id %>/verifikasi" class="mb-3"><%- include('../partials/csrf') %>
+          <div class="small fw-semibold mb-1">Catatan</div>
+          <textarea name="catatan" class="form-control form-control-sm mb-1" rows="2"><%= rumah.catatan || '' %></textarea>
+          <select name="verifikasi" class="form-select form-select-sm mb-1"><option value="OK" <%= rumah.verifikasi==='OK'?'selected':'' %>>Data benar</option><option value="PERLU_VERIFIKASI" <%= rumah.verifikasi!=='OK'?'selected':'' %>>Perlu dicek</option></select>
+          <button class="btn btn-sm btn-light">Simpan catatan</button></form>
+      <% } %>
+      <% if (user.isSuperAdmin) { %>
+        <form method="post" action="/admin/rumah/<%= rumah.id %>/identitas" data-confirm="Ubah blok/nomor rumah?"><%- include('../partials/csrf') %>
+          <div class="small fw-semibold mb-1">Blok / nomor rumah <span class="badge text-bg-warning">Super Admin</span></div>
+          <div class="d-flex gap-1 mb-1"><input name="blok" value="<%= rumah.blok.kode %>" class="form-control form-control-sm" required><input name="nomor" value="<%= rumah.nomor %>" class="form-control form-control-sm" required></div>
+          <label class="small me-2"><input type="checkbox" name="aktif" <%= rumah.aktif ? 'checked' : '' %>> Rumah aktif</label>
+          <button class="btn btn-sm btn-warning">Simpan</button></form>
+      <% } %>
+    </div>
+  </details>
 </div>
 
 <div class="col-lg-7">
-  <div class="card p-3 mb-3">
-    <h2 class="h6">Tagihan</h2>
-    <div class="table-responsive"><table class="table table-sm small">
-      <thead><tr><th>Periode</th><th>Rincian</th><th class="text-end">Total</th><th class="text-end">Terbayar</th><th>Status</th></tr></thead><tbody>
-      <% tagihan.forEach(t => { %>
-        <tr class="<%= t.status === 'DIBATALKAN' ? 'text-decoration-line-through text-muted' : '' %>">
-          <td><%= u.periodeLabel(t.periode) %><% if (t.sumber !== 'SISTEM') { %> <span class="badge text-bg-light"><%= t.sumber %></span><% } %></td>
-          <td><% t.items.forEach(i => { %><div><%= i.nama %> <span class="money"><%= u.rupiah(i.nominal) %></span><% if (i.terbayar && i.terbayar < i.nominal) { %> <span class="text-success">(<%= u.rupiah(i.terbayar) %>)</span><% } %></div><% }) %></td>
-          <td class="text-end money"><%= u.rupiah(t.total) %></td>
-          <td class="text-end money"><%= u.rupiah(t.terbayar) %></td>
-          <td><span class="badge text-bg-<%= {LUNAS:'success',SEBAGIAN:'warning',BELUM:'danger',DIBATALKAN:'secondary'}[t.status] %>"><%= t.status %></span>
-            <% if (user.isSuperAdmin && t.terbayar === 0 && t.status !== 'DIBATALKAN') { %>
-              <form method="post" action="/admin/tagihan/<%= t.id %>/batal" class="d-inline" data-confirm="Batalkan tagihan ini?"><%- include('../partials/csrf') %><input type="hidden" name="alasan" value="Dibatalkan Super Admin"><button class="btn btn-link btn-sm p-0 text-danger">batal</button></form>
-            <% } %>
-          </td>
-        </tr>
-      <% }) %>
-      <% if (!tagihan.length) { %><tr><td colspan="5" class="text-muted">Belum ada tagihan.</td></tr><% } %>
-      </tbody></table></div>
+  <div class="card mb-3">
+    <div class="card-head"><h2>Riwayat pembayaran</h2></div>
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th>Tanggal</th><th>Nominal</th><th>Cara</th><th>Status</th><th></th></tr></thead><tbody>
+      <% pembayaran.forEach(p => { %><tr><td><%= u.tanggal(p.tanggal) %></td><td class="money fw-semibold"><%= u.rupiah(p.nominal) %></td><td><%= {TUNAI:'Tunai',TRANSFER:'Transfer',MIDTRANS:'Online'}[p.metode] %></td>
+        <td><span class="pill pill-<%= p.status === 'DIPOSTING' ? 'LUNAS' : p.status === 'MENUNGGU' ? 'SEBAGIAN' : 'BEBAS' %>"><%= {DIPOSTING:'Diterima',MENUNGGU:'Menunggu',DITOLAK:'Ditolak',DIBATALKAN:'Dibatalkan'}[p.status] %></span></td>
+        <td class="text-end"><a href="/admin/pembayaran/<%= p.id %>" class="small">detail</a></td></tr><% }) %>
+      <% if (!pembayaran.length) { %><tr><td colspan="5" class="text-center text-muted py-3">Belum ada pembayaran.</td></tr><% } %>
+    </tbody></table></div>
   </div>
 
-  <div class="card p-3 mb-3">
-    <h2 class="h6">Pembayaran</h2>
-    <table class="table table-sm small"><thead><tr><th>Nomor</th><th>Tanggal</th><th>Metode</th><th class="text-end">Nominal</th><th>Status</th></tr></thead><tbody>
-      <% pembayaran.forEach(p => { %><tr><td><a href="/admin/pembayaran/<%= p.id %>"><%= p.nomor %></a></td><td><%= u.tanggal(p.tanggal) %></td><td><%= p.metode %></td><td class="text-end money"><%= u.rupiah(p.nominal) %></td><td><%= p.status %></td></tr><% }) %>
-      <% if (!pembayaran.length) { %><tr><td colspan="5" class="text-muted">Belum ada pembayaran.</td></tr><% } %>
-    </tbody></table>
+  <div class="card mb-3">
+    <div class="card-head"><h2>Tagihan</h2></div>
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th>Bulan</th><th>Iuran</th><th class="text-end">Sisa</th><th>Status</th></tr></thead><tbody>
+      <% tagihan.forEach(t => { %>
+        <tr class="<%= t.status === 'DIBATALKAN' ? 'text-muted text-decoration-line-through' : '' %>"><td><%= u.periodeLabel(t.periode) %></td>
+          <td class="small"><%= t.items.map(i => i.nama).join(', ') %></td>
+          <td class="text-end money"><%= u.rupiah(t.total - t.terbayar) %></td>
+          <td><span class="pill pill-<%= t.status === 'DIBATALKAN' ? 'BEBAS' : t.status %>"><%= {LUNAS:'Lunas',BELUM:'Belum',SEBAGIAN:'Sebagian',DIBATALKAN:'Batal'}[t.status] %></span></td></tr>
+      <% }) %>
+      <% if (!tagihan.length) { %><tr><td colspan="4" class="text-center text-muted py-3">Belum ada tagihan.</td></tr><% } %>
+    </tbody></table></div>
   </div>
 
   <% if (riwayat.length) { %>
-  <div class="card p-3 mb-3">
-    <h2 class="h6">Riwayat dari data sumber (sebelum sistem)</h2>
-    <% const bySumber = {}; riwayat.forEach(r => { (bySumber[r.sumber + ' · ' + r.kodeKomponen + ' · ' + r.periode.slice(0,4)] ||= []).push(r); }); %>
+  <div class="card mb-3"><div class="card-head"><h2>Catatan sheet lama</h2></div><div class="card-body">
+    <% const bySumber = {}; riwayat.forEach(r => { (bySumber[r.periode.slice(0,4) + ' · ' + r.kodeKomponen] ||= []).push(r); }); %>
     <% Object.entries(bySumber).forEach(([k, rows]) => { %>
       <div class="small text-muted mb-1"><%= k %></div>
-      <div class="bulan-grid mb-2"><% rows.forEach(r => { %><span class="<%= r.terbayar ? 'ok' : '' %>" title="<%= r.periode %> <%= r.keputusan || '' %>"><%= u.BULAN[Number(r.periode.slice(5))-1].slice(0,3) %></span><% }) %></div>
+      <div class="bulan-grid mb-2"><% rows.forEach(r => { %><span class="<%= r.terbayar ? 'ok' : '' %>"><%= u.BULAN[Number(r.periode.slice(5))-1].slice(0,3) %></span><% }) %></div>
     <% }) %>
-    <div class="small text-muted">Hijau = tercentang di sheet sumber (nominal tidak diketahui, tidak masuk buku kas).</div>
-  </div>
+    <div class="small text-muted">Hijau = tercentang di sheet 2026 (sebelum sistem).</div>
+  </div></div>
   <% } %>
 </div>
 </div>

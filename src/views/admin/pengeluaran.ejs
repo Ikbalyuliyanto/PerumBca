@@ -1,51 +1,73 @@
 <%- include('../partials/head') %>
-<h1 class="h4">Pengeluaran</h1>
-<% if (can('pengeluaran.ajukan')) { %>
-<div class="card p-3 mb-3">
-  <h2 class="h6">Pengajuan baru</h2>
-  <form method="post" action="/admin/pengeluaran" enctype="multipart/form-data" class="row g-2">
-    <%- include('../partials/csrf') %>
-    <div class="col-md-3"><select name="danaId" class="form-select form-select-sm"><% dana.forEach(d => { %><option value="<%= d.id %>"><%= d.nama %> (<%= u.rupiah(danaMap[d.id]?.saldo) %>)</option><% }) %></select></div>
-    <div class="col-md-3"><input name="kategori" class="form-control form-control-sm" placeholder="Kategori (mis. Kebersihan)" required></div>
-    <div class="col-md-2"><input name="nominal" data-money class="form-control form-control-sm" placeholder="Nominal" required></div>
-    <div class="col-md-4"><input type="file" name="lampiran" accept="image/*,application/pdf" class="form-control form-control-sm"></div>
-    <div class="col-12"><textarea name="alasan" class="form-control form-control-sm" rows="2" placeholder="Alasan / rincian kebutuhan" required></textarea></div>
-    <div class="col-12 d-flex gap-2"><button name="ajukan" value="1" class="btn btn-sm btn-brand">Ajukan ke Ketua RT</button><button name="ajukan" value="0" class="btn btn-sm btn-outline-secondary">Simpan draft</button></div>
-  </form>
+<% const ST = {DRAFT:['Draft','BEBAS'],PENDING:['Menunggu persetujuan','SEBAGIAN'],APPROVED:['Disetujui, belum dibayar','SHEET'],REJECTED:['Ditolak','BELUM'],PAID:['Sudah dibayar','LUNAS'],CANCELLED:['Dibatalkan','BEBAS']}; %>
+<div class="page-head">
+  <div><h1>Pengeluaran</h1><div class="sub">Diajukan bendahara, disetujui Ketua RT. Saldo baru berkurang setelah ditandai sudah dibayar.</div></div>
 </div>
-<% } %>
-<form class="d-flex gap-2 mb-2" method="get"><select name="status" class="form-select form-select-sm" style="width:auto"><option value="">Semua status</option><% ['DRAFT','PENDING','APPROVED','REJECTED','PAID','CANCELLED'].forEach(s => { %><option <%= query.status === s ? 'selected' : '' %>><%= s %></option><% }) %></select><button class="btn btn-sm btn-outline-secondary">Filter</button></form>
-<div class="card"><div class="table-responsive"><table class="table table-sm m-0 small">
-  <thead><tr><th>Nomor</th><th>Dana</th><th>Kategori / alasan</th><th class="text-end">Nominal</th><th>Oleh</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
-  <% list.forEach(p => { const mine = p.dibuatOlehId === user.id; %>
-  <tr>
-    <td><%= p.nomor %><br><span class="text-muted"><%= u.tanggal(p.createdAt) %></span></td>
-    <td><%= danaMap[p.danaId]?.nama %></td>
-    <td><b><%= p.kategori %></b><br><%= p.alasan %>
-      <% if (p.lampiranFileId) { %><br><a href="/file/<%= p.lampiranFileId %>" target="_blank">lampiran</a><% } %>
-      <% if (p.buktiFileId) { %> · <a href="/file/<%= p.buktiFileId %>" target="_blank">bukti bayar</a><% } %>
-      <% if (p.alasanTolak) { %><br><span class="text-danger">Ditolak: <%= p.alasanTolak %></span><% } %></td>
-    <td class="text-end money"><%= u.rupiah(p.nominal) %></td>
-    <td><%= userMap[p.dibuatOlehId] %><% if (p.disetujuiOlehId) { %><br><span class="text-muted">✔ <%= userMap[p.disetujuiOlehId] %></span><% } %></td>
-    <td><span class="badge text-bg-<%= {DRAFT:'light',PENDING:'warning',APPROVED:'info',REJECTED:'secondary',PAID:'success',CANCELLED:'dark'}[p.status] %>"><%= p.status %></span></td>
-    <td style="min-width:200px">
-      <% if (p.status === 'DRAFT' && can('pengeluaran.ajukan')) { %><form method="post" action="/admin/pengeluaran/<%= p.id %>/ajukan" class="d-inline"><%- include('../partials/csrf') %><button class="btn btn-sm btn-outline-primary py-0">Ajukan</button></form><% } %>
-      <% if (p.status === 'PENDING' && can('pengeluaran.setujui')) { %>
-        <% if (mine) { %><span class="text-muted">Menunggu penyetuju lain</span><% } else { %>
-        <form method="post" action="/admin/pengeluaran/<%= p.id %>/putuskan" class="d-flex gap-1"><%- include('../partials/csrf') %>
-          <input name="alasan" class="form-control form-control-sm" placeholder="alasan (wajib jika tolak)">
-          <button name="aksi" value="setuju" class="btn btn-sm btn-success py-0">Setujui</button><button name="aksi" value="tolak" class="btn btn-sm btn-outline-danger py-0">Tolak</button></form>
-        <% } %>
-      <% } %>
-      <% if (p.status === 'APPROVED' && can('pengeluaran.bayar')) { %>
-        <form method="post" action="/admin/pengeluaran/<%= p.id %>/bayar" enctype="multipart/form-data" class="d-flex flex-column gap-1" data-confirm="Catat pengeluaran ini sebagai sudah dibayar? Saldo dana akan berkurang."><%- include('../partials/csrf') %>
-          <input type="file" name="bukti" accept="image/*,application/pdf" class="form-control form-control-sm" required>
-          <div class="d-flex gap-1"><input type="date" name="tanggal" class="form-control form-control-sm"><button class="btn btn-sm btn-brand py-0">Sudah dibayar</button></div></form>
-      <% } %>
-      <% if (['DRAFT','PENDING','APPROVED'].includes(p.status) && can('pengeluaran.ajukan')) { %><form method="post" action="/admin/pengeluaran/<%= p.id %>/batal" class="d-inline" data-confirm="Batalkan pengeluaran?"><%- include('../partials/csrf') %><button class="btn btn-link btn-sm text-danger p-0">batal</button></form><% } %>
-    </td>
-  </tr>
+
+<div class="row g-3 mb-3">
+  <% saldo.filter(d => d.aktif).forEach(d => { %>
+  <div class="col-6 col-md-3"><div class="card stat"><div class="ico ico-green"><i class="bi bi-bank"></i></div><div><div class="val money"><%= u.rupiah(d.saldo) %></div><div class="lbl"><%= d.nama %></div></div></div></div>
   <% }) %>
-  <% if (!list.length) { %><tr><td colspan="7" class="text-muted">Belum ada pengeluaran.</td></tr><% } %>
-</tbody></table></div></div>
+</div>
+
+<% if (can('pengeluaran.ajukan')) { %>
+<details class="card mb-3" <%= list.length ? '' : 'open' %>>
+  <summary class="card-head" style="cursor:pointer"><span class="fw-semibold"><i class="bi bi-plus-circle text-success"></i> Ajukan pengeluaran baru</span></summary>
+  <div class="card-body">
+  <form method="post" action="/admin/pengeluaran" enctype="multipart/form-data" class="row g-3">
+    <%- include('../partials/csrf') %>
+    <div class="col-md-4"><label class="form-label small">Untuk keperluan</label><input name="kategori" class="form-control" placeholder="mis. Gaji petugas sampah" required></div>
+    <div class="col-md-3"><label class="form-label small">Nominal</label><div class="input-group"><span class="input-group-text">Rp</span><input name="nominal" data-money class="form-control" required inputmode="numeric"></div></div>
+    <div class="col-md-5"><label class="form-label small">Diambil dari dana</label><select name="danaId" class="form-select"><% dana.forEach(d => { %><option value="<%= d.id %>"><%= d.nama %> (saldo <%= u.rupiah(danaMap[d.id]?.saldo) %>)</option><% }) %></select></div>
+    <div class="col-md-8"><label class="form-label small">Keterangan</label><input name="alasan" class="form-control" placeholder="Rincian singkat" required></div>
+    <div class="col-md-4"><label class="form-label small">Lampiran (nota/foto, opsional)</label><input type="file" name="lampiran" accept="image/*,application/pdf" class="form-control"></div>
+    <div class="col-12"><button name="ajukan" value="1" class="btn btn-brand"><i class="bi bi-send"></i> Ajukan ke Ketua RT</button></div>
+  </form>
+  </div>
+</details>
+<% } %>
+
+<div class="card">
+  <form method="get" class="card-head flex-wrap">
+    <h2>Daftar pengeluaran</h2>
+    <div class="d-flex gap-2 flex-wrap">
+      <% [['', 'Semua'], ['PENDING', 'Menunggu'], ['APPROVED', 'Siap dibayar'], ['PAID', 'Sudah dibayar']].forEach(([k, l]) => { %><a href="?status=<%= k %>" class="btn btn-sm <%= (query.status || '') === k ? 'btn-brand' : 'btn-light' %>"><%= l %></a><% }) %>
+    </div>
+  </form>
+  <div class="list-group list-group-flush">
+  <% list.forEach(p => { const mine = p.dibuatOlehId === user.id; const st = ST[p.status]; %>
+    <div class="list-group-item py-3">
+      <div class="d-flex flex-wrap justify-content-between gap-2">
+        <div>
+          <div class="fw-semibold"><%= p.kategori %> <span class="pill pill-<%= st[1] %> ms-1"><%= st[0] %></span></div>
+          <div class="small text-muted"><%= p.alasan %></div>
+          <div class="small text-muted"><%= p.nomor %> · <%= u.tanggal(p.createdAt) %> · <%= danaMap[p.danaId]?.nama %> · oleh <%= userMap[p.dibuatOlehId] %><% if (p.disetujuiOlehId) { %> · <%= p.status === 'REJECTED' ? 'ditolak' : 'disetujui' %> <%= userMap[p.disetujuiOlehId] %><% } %>
+            <% if (p.lampiranFileId) { %> · <a href="/file/<%= p.lampiranFileId %>" target="_blank">lampiran</a><% } %>
+            <% if (p.buktiFileId) { %> · <a href="/file/<%= p.buktiFileId %>" target="_blank">bukti bayar</a><% } %></div>
+          <% if (p.alasanTolak) { %><div class="small text-danger">Alasan ditolak: <%= p.alasanTolak %></div><% } %>
+        </div>
+        <div class="text-end"><div class="fs-5 fw-bold money"><%= u.rupiah(p.nominal) %></div></div>
+      </div>
+      <div class="d-flex flex-wrap gap-2 mt-2">
+        <% if (p.status === 'DRAFT' && can('pengeluaran.ajukan')) { %><form method="post" action="/admin/pengeluaran/<%= p.id %>/ajukan" class="m-0"><%- include('../partials/csrf') %><button class="btn btn-sm btn-light">Ajukan</button></form><% } %>
+        <% if (p.status === 'PENDING' && can('pengeluaran.setujui')) { %>
+          <% if (mine) { %><span class="small text-muted">Menunggu persetujuan pengurus lain.</span><% } else { %>
+          <form method="post" action="/admin/pengeluaran/<%= p.id %>/putuskan" class="d-flex gap-2 m-0 flex-wrap"><%- include('../partials/csrf') %>
+            <button name="aksi" value="setuju" class="btn btn-sm btn-success"><i class="bi bi-check2"></i> Setujui</button>
+            <input name="alasan" class="form-control form-control-sm" placeholder="Alasan jika ditolak" style="width:200px">
+            <button name="aksi" value="tolak" class="btn btn-sm btn-outline-danger">Tolak</button></form>
+          <% } %>
+        <% } %>
+        <% if (p.status === 'APPROVED' && can('pengeluaran.bayar')) { %>
+          <form method="post" action="/admin/pengeluaran/<%= p.id %>/bayar" enctype="multipart/form-data" class="d-flex gap-2 m-0 flex-wrap align-items-center" data-confirm="Tandai sudah dibayar? Saldo dana akan berkurang."><%- include('../partials/csrf') %>
+            <input type="file" name="bukti" accept="image/*,application/pdf" class="form-control form-control-sm" required style="width:230px" title="Bukti pembayaran">
+            <button class="btn btn-sm btn-brand"><i class="bi bi-check2-circle"></i> Sudah dibayar</button></form>
+        <% } %>
+        <% if (['DRAFT','PENDING','APPROVED'].includes(p.status) && can('pengeluaran.ajukan')) { %><form method="post" action="/admin/pengeluaran/<%= p.id %>/batal" class="m-0" data-confirm="Batalkan pengeluaran ini?"><%- include('../partials/csrf') %><button class="btn btn-sm btn-link text-danger">Batalkan</button></form><% } %>
+      </div>
+    </div>
+  <% }) %>
+  <% if (!list.length) { %><div class="list-group-item text-center text-muted py-4">Belum ada pengeluaran.</div><% } %>
+  </div>
+</div>
 <%- include('../partials/foot') %>

@@ -1,54 +1,62 @@
 <%- include('../partials/head') %>
-<h1 class="h4">Buku kas</h1>
-<div class="row g-2 mb-3">
-  <% saldo.forEach(d => { %><div class="col-6 col-md-3"><div class="card stat p-3"><div class="lbl"><%= d.nama %></div><div class="val money"><%= u.rupiah(d.saldo) %></div></div></div><% }) %>
+<% const JN = {SALDO_AWAL:'Saldo awal',IURAN:'Iuran',PENGELUARAN:'Pengeluaran',BIAYA_MIDTRANS:'Biaya online',PEMBALIK:'Koreksi',LAINNYA:'Lain-lain'}; %>
+<div class="page-head">
+  <div><h1>Buku Kas</h1><div class="sub">Semua uang masuk dan keluar. Data yang sudah tercatat tidak bisa diedit; kesalahan dikoreksi dengan entri pembalik.</div></div>
 </div>
-<% if (can('ledger.saldo_awal')) { %>
 <div class="row g-3 mb-3">
-  <div class="col-md-6"><div class="card p-3 h-100">
-    <h2 class="h6">Saldo awal (sekali per dana)</h2>
-    <% const belum = dana.filter(d => !sudahSaldoAwal.has(d.id)); %>
-    <% if (belum.length) { %>
-    <form method="post" action="/admin/ledger/saldo-awal" class="row g-2" data-confirm="Saldo awal hanya bisa diinput sekali per dana. Lanjutkan?">
+  <% saldo.forEach(d => { %><div class="col-6 col-md-3"><div class="card stat"><div class="ico ico-green"><i class="bi bi-bank"></i></div><div><div class="val money"><%= u.rupiah(d.saldo) %></div><div class="lbl"><%= d.nama %></div></div></div></div><% }) %>
+  <div class="col-6 col-md-3"><div class="card stat"><div class="ico ico-violet"><i class="bi bi-safe"></i></div><div><div class="val money"><%= u.rupiah(saldo.reduce((s, d) => s + d.saldo, 0)) %></div><div class="lbl">Total kas</div></div></div></div>
+</div>
+
+<% if (can('ledger.saldo_awal')) { const belum = dana.filter(d => !sudahSaldoAwal.has(d.id)); %>
+<div class="row g-3 mb-3">
+  <% if (belum.length) { %>
+  <div class="col-md-6"><details class="card h-100" open><summary class="card-head" style="cursor:pointer"><span class="fw-semibold"><i class="bi bi-flag text-success"></i> Isi saldo awal (sekali saja)</span></summary>
+    <div class="card-body"><form method="post" action="/admin/ledger/saldo-awal" class="row g-2" data-confirm="Saldo awal hanya bisa diisi sekali per dana. Lanjutkan?">
       <%- include('../partials/csrf') %>
       <div class="col-6"><select name="danaId" class="form-select form-select-sm"><% belum.forEach(d => { %><option value="<%= d.id %>"><%= d.nama %></option><% }) %></select></div>
-      <div class="col-6"><input name="nominal" data-money class="form-control form-control-sm" placeholder="Nominal" required></div>
-      <div class="col-6"><input type="date" name="tanggal" class="form-control form-control-sm" required></div>
-      <div class="col-6"><button class="btn btn-sm btn-brand w-100">Simpan saldo awal</button></div>
-    </form>
-    <% } else { %><p class="small text-muted m-0">Saldo awal semua dana sudah diinput.</p><% } %>
-  </div></div>
-  <div class="col-md-6"><div class="card p-3 h-100">
-    <h2 class="h6">Pemasukan/pengeluaran lain-lain</h2>
-    <form method="post" action="/admin/ledger/manual" class="row g-2" data-confirm="Entri buku kas tidak bisa diedit. Lanjutkan?">
+      <div class="col-6"><div class="input-group input-group-sm"><span class="input-group-text">Rp</span><input name="nominal" data-money class="form-control" required inputmode="numeric"></div></div>
+      <div class="col-6"><input type="date" name="tanggal" class="form-control form-control-sm" required title="Tanggal mulai pembukuan"></div>
+      <div class="col-6"><button class="btn btn-sm btn-brand w-100">Simpan</button></div>
+    </form></div></details></div>
+  <% } %>
+  <div class="col-md-6"><details class="card h-100"><summary class="card-head" style="cursor:pointer"><span class="fw-semibold"><i class="bi bi-plus-circle text-success"></i> Catat uang masuk/keluar lain</span></summary>
+    <div class="card-body"><form method="post" action="/admin/ledger/manual" class="row g-2" data-confirm="Catatan buku kas tidak bisa diedit. Lanjutkan?">
       <%- include('../partials/csrf') %>
-      <div class="col-4"><select name="danaId" class="form-select form-select-sm"><% dana.forEach(d => { %><option value="<%= d.id %>"><%= d.nama %></option><% }) %></select></div>
-      <div class="col-4"><select name="arah" class="form-select form-select-sm"><option>MASUK</option><option>KELUAR</option></select></div>
-      <div class="col-4"><input name="nominal" data-money class="form-control form-control-sm" placeholder="Nominal" required></div>
-      <div class="col-8"><input name="keterangan" class="form-control form-control-sm" placeholder="Keterangan (mis. donasi)" required></div>
-      <div class="col-4"><input type="date" name="tanggal" class="form-control form-control-sm"></div>
-      <div class="col-12"><button class="btn btn-sm btn-outline-primary">Catat</button> <span class="small text-muted">Pengeluaran rutin sebaiknya lewat menu Pengeluaran (dengan persetujuan).</span></div>
-    </form>
-  </div></div>
+      <div class="col-6"><select name="arah" class="form-select form-select-sm"><option value="MASUK">Uang masuk</option><option value="KELUAR">Uang keluar</option></select></div>
+      <div class="col-6"><select name="danaId" class="form-select form-select-sm"><% dana.forEach(d => { %><option value="<%= d.id %>"><%= d.nama %></option><% }) %></select></div>
+      <div class="col-6"><div class="input-group input-group-sm"><span class="input-group-text">Rp</span><input name="nominal" data-money class="form-control" required inputmode="numeric"></div></div>
+      <div class="col-6"><input type="date" name="tanggal" class="form-control form-control-sm"></div>
+      <div class="col-12"><input name="keterangan" class="form-control form-control-sm" placeholder="Keterangan (mis. donasi warga)" required></div>
+      <div class="col-12"><button class="btn btn-sm btn-light">Catat</button> <span class="small text-muted">Pengeluaran rutin sebaiknya lewat menu Pengeluaran.</span></div>
+    </form></div></details></div>
 </div>
 <% } %>
-<form class="d-flex flex-wrap gap-2 mb-2" method="get">
-  <select name="dana" class="form-select form-select-sm" style="width:auto"><option value="">Semua dana</option><% dana.forEach(d => { %><option value="<%= d.id %>" <%= query.dana == d.id ? 'selected' : '' %>><%= d.nama %></option><% }) %></select>
-  <select name="jenis" class="form-select form-select-sm" style="width:auto"><option value="">Semua jenis</option><% ['SALDO_AWAL','IURAN','PENGELUARAN','BIAYA_MIDTRANS','PEMBALIK','LAINNYA'].forEach(j => { %><option <%= query.jenis === j ? 'selected' : '' %>><%= j %></option><% }) %></select>
-  <input type="month" name="dari" value="<%= query.dari || '' %>" class="form-control form-control-sm" style="width:auto">
-  <input type="month" name="sampai" value="<%= query.sampai || '' %>" class="form-control form-control-sm" style="width:auto">
-  <button class="btn btn-sm btn-outline-secondary">Filter</button>
-</form>
-<div class="card"><div class="table-responsive"><table class="table table-sm m-0 small">
-  <thead><tr><th>#</th><th>Tanggal</th><th>Dana</th><th>Jenis</th><th>Keterangan</th><th class="text-end">Masuk</th><th class="text-end">Keluar</th><th></th></tr></thead><tbody>
-  <% entries.forEach(e => { %>
-    <tr><td class="text-muted"><%= e.id %></td><td><%= u.tanggal(e.tanggal) %></td><td><%= e.dana.kode %></td><td><%= e.jenis %></td>
-      <td><%= e.keterangan %><% if (e.sumberTipe === 'PEMBAYARAN') { %> <a href="/admin/pembayaran/<%= e.sumberId %>">›</a><% } %></td>
-      <td class="text-end money text-success"><%= e.arah === 'MASUK' ? u.rupiah(e.nominal) : '' %></td><td class="text-end money text-danger"><%= e.arah === 'KELUAR' ? u.rupiah(e.nominal) : '' %></td>
-      <td><% if (user.isSuperAdmin && e.jenis !== 'PEMBALIK' && e.sumberTipe !== 'PEMBAYARAN') { %>
-        <form method="post" action="/admin/ledger/<%= e.id %>/koreksi" class="d-flex gap-1" data-confirm="Buat entri pembalik untuk #<%= e.id %>?"><%- include('../partials/csrf') %><input name="alasan" class="form-control form-control-sm" placeholder="alasan" required style="width:90px"><button class="btn btn-sm btn-outline-danger py-0">balik</button></form>
-      <% } %></td></tr>
-  <% }) %>
-  <% if (!entries.length) { %><tr><td colspan="8" class="text-muted">Belum ada transaksi.</td></tr><% } %>
-</tbody></table></div></div>
+
+<div class="card">
+  <form method="get" class="card-head flex-wrap">
+    <h2>Transaksi</h2>
+    <div class="d-flex gap-2 flex-wrap">
+      <select name="dana" class="form-select form-select-sm" style="width:auto"><option value="">Semua dana</option><% dana.forEach(d => { %><option value="<%= d.id %>" <%= query.dana == d.id ? 'selected' : '' %>><%= d.nama %></option><% }) %></select>
+      <input type="month" name="dari" value="<%= query.dari || '' %>" class="form-control form-control-sm" style="width:auto" title="Dari bulan">
+      <input type="month" name="sampai" value="<%= query.sampai || '' %>" class="form-control form-control-sm" style="width:auto" title="Sampai bulan">
+      <button class="btn btn-sm btn-light">Tampilkan</button>
+    </div>
+  </form>
+  <div class="table-responsive"><table class="table align-middle">
+    <thead><tr><th>Tanggal</th><th>Keterangan</th><th class="d-none d-md-table-cell">Dana</th><th class="text-end">Masuk</th><th class="text-end">Keluar</th><% if (user.isSuperAdmin) { %><th></th><% } %></tr></thead><tbody>
+    <% entries.forEach(e => { %>
+      <tr><td class="text-nowrap small"><%= u.tanggal(e.tanggal) %></td>
+        <td><div><%= e.keterangan %><% if (e.sumberTipe === 'PEMBAYARAN') { %> <a href="/admin/pembayaran/<%= e.sumberId %>" class="small">›</a><% } %></div><div class="small text-muted"><%= JN[e.jenis] || e.jenis %></div></td>
+        <td class="d-none d-md-table-cell small"><%= e.dana.nama %></td>
+        <td class="text-end money text-success"><%= e.arah === 'MASUK' ? u.rupiah(e.nominal) : '' %></td>
+        <td class="text-end money text-danger"><%= e.arah === 'KELUAR' ? u.rupiah(e.nominal) : '' %></td>
+        <% if (user.isSuperAdmin) { %><td class="text-end"><% if (e.jenis !== 'PEMBALIK' && e.sumberTipe !== 'PEMBAYARAN') { %>
+          <details><summary class="small text-danger" style="cursor:pointer">koreksi</summary>
+            <form method="post" action="/admin/ledger/<%= e.id %>/koreksi" class="d-flex gap-1 mt-1" data-confirm="Buat entri pembalik?"><%- include('../partials/csrf') %><input name="alasan" class="form-control form-control-sm" placeholder="alasan" required style="width:110px"><button class="btn btn-sm btn-outline-danger">OK</button></form></details>
+        <% } %></td><% } %></tr>
+    <% }) %>
+    <% if (!entries.length) { %><tr><td colspan="6" class="text-center text-muted py-4">Belum ada transaksi.</td></tr><% } %>
+  </tbody></table></div>
+</div>
 <%- include('../partials/foot') %>
