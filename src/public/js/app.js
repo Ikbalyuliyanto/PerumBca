@@ -131,3 +131,36 @@
   document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) { new bootstrap.Tooltip(el); });
   document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (el) { new bootstrap.Popover(el); });
 })();
+
+// Pop-up detail status iuran per rumah (halaman Bayar)
+(function () {
+  var modalEl = document.getElementById('detail-modal');
+  if (!modalEl || !window.bootstrap) return;
+  var modal = new bootstrap.Modal(modalEl);
+  var TXT = { LUNAS: ['✓', 'Sudah dibayar', 'text-success'], SEBAGIAN: ['⚠', 'Sebagian', 'text-warning'], BELUM: ['✗', 'Belum dibayar', 'text-danger'], BEBAS: ['–', 'Tidak wajib', 'text-muted'] };
+  document.querySelectorAll('[data-detail]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var d = JSON.parse(b.getAttribute('data-detail'));
+      document.getElementById('dm-title').textContent = 'Rumah ' + d.kode;
+      document.getElementById('dm-sub').textContent = d.nama || '';
+      document.getElementById('dm-sisa').textContent = d.sisa;
+      var ul = document.getElementById('dm-list');
+      ul.innerHTML = '';
+      d.items.forEach(function (it) {
+        var t = TXT[it.st] || TXT.BELUM;
+        var li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        var left = document.createElement('div');
+        left.innerHTML = '<div class="fw-semibold"></div><div class="small text-muted"></div>';
+        left.children[0].textContent = it.nama;
+        left.children[1].textContent = it.nominal;
+        var right = document.createElement('span');
+        right.className = 'fw-semibold small ' + t[2];
+        right.textContent = t[0] + ' ' + t[1];
+        li.appendChild(left); li.appendChild(right); ul.appendChild(li);
+      });
+      document.getElementById('dm-pilih').href = b.getAttribute('data-pilih');
+      modal.show();
+    });
+  });
+})();

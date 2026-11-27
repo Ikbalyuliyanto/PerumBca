@@ -1,9 +1,16 @@
 <%- include('../partials/head') %>
-<% const legenda = jenis.map((j, i) => `${i + 1}. ${j.nama} ${u.rupiah(j.nominal)}`).join(' · '); %>
+<%
+  const statusOf = (r) => {
+    if (r.bebas) return 'BEBAS';
+    if (r.sisa === 0) return 'LUNAS';
+    return Object.values(r.per).some(s => s === 'LUNAS' || s === 'SEBAGIAN') ? 'SEBAGIAN' : 'BELUM';
+  };
+  const LBL = { LUNAS: ['bi-check-circle-fill', 'Lunas'], SEBAGIAN: ['bi-exclamation-triangle-fill', 'Sebagian'], BELUM: ['bi-x-circle-fill', 'Belum'], BEBAS: ['bi-dash-circle', 'Tidak wajib'] };
+  const half = Math.ceil(list.length / 2);
+  const parts = list.length > 8 ? [list.slice(0, half), list.slice(half)] : [list];
+%>
 <div class="page-head">
-  <div><h1>Bayar Iuran</h1>
-    <div class="sub">✓ lunas · ✗ belum
-      <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="bottom" title="Urutan jenis iuran" data-bs-content="<%= legenda %>"><i class="bi bi-info-circle"></i> keterangan</button></div></div>
+  <div><h1>Bayar Iuran</h1><div class="sub">Pilih rumah yang membayar. <b>Bayar</b> = lunas semua iuran bulan ini.</div></div>
   <div class="month-nav"><a href="?periode=<%= prev %>"><i class="bi bi-chevron-left"></i></a><span><%= u.periodeLabel(periode) %></span><a href="?periode=<%= next %>"><i class="bi bi-chevron-right"></i></a></div>
 </div>
 
@@ -17,7 +24,7 @@
   <input type="hidden" name="periode" value="<%= periode %>">
   <div class="d-flex gap-2">
     <a href="?periode=<%= periode %>" class="btn btn-sm <%= !query.f ? 'btn-brand' : 'btn-light' %>">Semua</a>
-    <a href="?periode=<%= periode %>&f=belum" class="btn btn-sm <%= query.f === 'belum' ? 'btn-brand' : 'btn-light' %>">Belum</a>
+    <a href="?periode=<%= periode %>&f=belum" class="btn btn-sm <%= query.f === 'belum' ? 'btn-brand' : 'btn-light' %>">Belum lunas</a>
     <a href="?periode=<%= periode %>&f=lunas" class="btn btn-sm <%= query.f === 'lunas' ? 'btn-brand' : 'btn-light' %>">Lunas</a>
   </div>
   <div class="input-group input-group-sm" style="max-width:220px"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input name="q" value="<%= query.q || '' %>" class="form-control" placeholder="Cari rumah / nama"><% if (query.f) { %><input type="hidden" name="f" value="<%= query.f %>"><% } %></div>
@@ -26,25 +33,29 @@
 <form method="post" action="/admin/bayar/semua" id="bulk-form" data-confirm="Lunaskan semua iuran <%= u.periodeLabel(periode) %> untuk rumah yang dicentang?">
   <%- include('../partials/csrf') %>
   <input type="hidden" name="periode" value="<%= periode %>">
-  <div class="row g-2">
-  <% list.forEach(r => { const lunas = !r.bebas && r.sisa === 0; const bisa = !r.bebas && !lunas && can('pembayaran.input'); %>
-    <div class="col-md-6">
-      <div class="card house-card <%= r.bebas ? 'opacity-50' : '' %>">
-        <% if (bisa) { %><input type="checkbox" class="form-check-input house-chk" name="rumah" value="<%= r.id %>" aria-label="Pilih <%= r.kode %>"><% } %>
-        <div class="flex-grow-1 min-w-0">
-          <div class="d-flex align-items-baseline gap-2"><span class="house"><%= r.kode %></span><span class="small text-muted text-truncate"><%= r.nama || '—' %></span></div>
-          <div class="d-flex gap-1 mt-1">
-            <% jenis.forEach((j, i) => { const s = r.per[j.kode]; %>
-              <span class="mark mark-<%= s %>" tabindex="0" data-bs-toggle="tooltip" title="<%= j.nama %> <%= u.rupiah(j.nominal) %>: <%= {LUNAS:'lunas',BELUM:'belum',SEBAGIAN:'sebagian',BEBAS:'tidak wajib'}[s] %>"><%= s === 'LUNAS' ? '✓' : s === 'BEBAS' ? '–' : '✗' %></span>
-            <% }) %>
-          </div>
-        </div>
-        <div class="text-end">
-          <div class="small fw-semibold money <%= lunas ? 'text-success' : 'text-danger' %>"><%= r.bebas ? 'bebas' : lunas ? 'Lunas' : u.rupiah(r.sisa) %></div>
-          <div class="d-flex gap-1 mt-1 justify-content-end">
-            <% if (bisa) { %><button class="btn btn-sm btn-brand py-0" form="one-<%= r.id %>" title="Bayar semua"><i class="bi bi-check2-all"></i> Bayar</button><% } %>
-            <a class="btn btn-sm btn-light py-0" href="/admin/bayar/<%= r.id %>" title="Pilih iuran tertentu"><i class="bi bi-three-dots"></i></a>
-          </div>
+  <div class="row g-3">
+  <% parts.forEach(rows => { %>
+    <div class="<%= parts.length > 1 ? 'col-xl-6' : 'col-12' %>">
+      <div class="card h-100">
+        <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead><tr><th style="width:32px"></th><th>Rumah</th><th>Penghuni</th><th>Status</th><th class="text-end">Aksi</th></tr></thead>
+          <tbody>
+          <% rows.forEach(r => { const st = statusOf(r); const bisa = (st === 'BELUM' || st === 'SEBAGIAN') && can('pembayaran.input');
+               const detail = { kode: r.kode, nama: r.nama, sisa: u.rupiah(r.sisa), items: jenis.map(j => ({ nama: j.nama, nominal: u.rupiah(j.nominal), st: r.per[j.kode] })) }; %>
+            <tr class="<%= st === 'BEBAS' ? 'text-muted' : '' %>">
+              <td><% if (bisa) { %><input type="checkbox" class="form-check-input" name="rumah" value="<%= r.id %>" aria-label="Pilih <%= r.kode %>"><% } %></td>
+              <td class="house"><%= r.kode %></td>
+              <td class="text-truncate" style="max-width:150px"><%= r.nama || '—' %></td>
+              <td><span class="pill pill-<%= st %>"><i class="bi <%= LBL[st][0] %>"></i> <%= LBL[st][1] %></span></td>
+              <td class="text-end text-nowrap">
+                <button type="button" class="btn btn-sm btn-light py-0" data-detail="<%= JSON.stringify(detail) %>" data-pilih="/admin/bayar/<%= r.id %>">Detail</button>
+                <% if (bisa) { %><button class="btn btn-sm btn-brand py-0" form="one-<%= r.id %>">Bayar</button><% } %>
+              </td>
+            </tr>
+          <% }) %>
+          </tbody>
+        </table>
         </div>
       </div>
     </div>
@@ -53,10 +64,18 @@
   </div>
   <% if (can('pembayaran.input') && list.some(r => !r.bebas && r.sisa > 0)) { %>
   <div class="card sticky-bar mt-3">
-    <label class="small"><input type="checkbox" class="form-check-input" data-check-all="rumah"> Pilih semua yang belum</label>
+    <label class="small"><input type="checkbox" class="form-check-input" data-check-all="rumah"> Pilih semua yang belum lunas</label>
     <div class="d-flex gap-2 align-items-center"><input type="date" name="tanggal" class="form-control form-control-sm" value="<%= new Date().toISOString().slice(0,10) %>" style="width:auto"><button class="btn btn-brand btn-sm"><i class="bi bi-check2-all"></i> Lunaskan yang dicentang</button></div>
   </div>
   <% } %>
 </form>
 <% list.forEach(r => { if (!r.bebas && r.sisa > 0) { %><form id="one-<%= r.id %>" method="post" action="/admin/bayar/semua" class="d-none" data-confirm="Bayar semua iuran <%= r.kode %> <%= u.periodeLabel(periode) %> (<%= u.rupiah(r.sisa) %>)?"><%- include('../partials/csrf') %><input type="hidden" name="periode" value="<%= periode %>"><input type="hidden" name="rumah" value="<%= r.id %>"></form><% } }) %>
+
+<div class="modal fade" id="detail-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content" style="border-radius:16px">
+    <div class="modal-header"><div><h5 class="modal-title" id="dm-title"></h5><div class="small text-muted" id="dm-sub"></div></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body p-0"><ul class="list-group list-group-flush" id="dm-list"></ul></div>
+    <div class="modal-footer justify-content-between"><div><div class="small text-muted">Sisa <%= u.periodeLabel(periode) %></div><div class="fw-bold" id="dm-sisa"></div></div><a class="btn btn-brand btn-sm" id="dm-pilih" href="#">Bayar sebagian</a></div>
+  </div></div>
+</div>
 <%- include('../partials/foot') %>
