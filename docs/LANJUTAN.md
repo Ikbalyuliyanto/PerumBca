@@ -25,7 +25,7 @@ Terakhir diperbarui: 2026-11-26. Ditulis untuk melanjutkan dari komputer lain (m
 - WhatsApp otomatis (Baileys) karena nomor pengirim belum ditentukan. Saat ini mode manual wa.me.
 - Cron backup di STB (`scripts/backup.sh`).
 - Tanggal mulai pembukuan dan saldo awal tiap dana (menunggu angka dari pemilik).
-- Halaman lain (Data Warga, Pengeluaran, Buku Kas, Laporan) masih bergaya lama dan perlu disederhanakan mengikuti gaya baru.
+- Halaman yang masih bergaya lama: Riwayat Bayar, Tagihan, Pengajuan, Impor, WhatsApp, Akun, Hak Akses, Pengaturan, Audit (jarang dipakai). Dashboard, Bayar Iuran, Data Warga, Jenis Iuran, Pengeluaran, Buku Kas, dan Laporan sudah bergaya baru (2026-11-27).
 
 ## Cara deploy
 Lihat [OPERASIONAL.md](OPERASIONAL.md). Ringkasnya: `git archive HEAD | gzip` → scp ke `/opt/perumbca/` → cocokkan sha256 → ekstrak ke `src/` → `./deploy.sh` (otomatis migrate + seed). Akses SSH ke STB memakai kunci yang ada di PC kantor. Di komputer lain, tambahkan kunci SSH baru ke `/root/.ssh/authorized_keys` di STB.
