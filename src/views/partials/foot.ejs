@@ -1,7 +1,44 @@
-  </main>
-  <footer class="footer">&copy; <%= new Date().getFullYear() %> <%= appName %></footer>
+<% const staffNav = locals.user && locals.isStaff; %>
+<% if (staffNav) { %>
+      <footer class="text-secondary small py-4">&copy; <%= new Date().getFullYear() %> <%= appName %> · Tema Dasher oleh <a href="https://codescandy.com" target="_blank" rel="noopener">Codescandy</a></footer>
+    </div>
+  </div>
 </div>
+<%# ── Menu HP (offcanvas) ── %>
+<div class="offcanvasNav offcanvas offcanvas-start" tabindex="-1" id="offcanvasNav">
+  <div class="offcanvas-header">
+    <a class="d-flex align-items-center gap-2" href="/admin"><img src="/static/dasher/img/logo-icon.svg" alt=""><span class="fw-bold fs-4 site-logo-text">Iuran BCA</span></a>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Tutup"></button>
+  </div>
+  <div class="offcanvas-body p-0">
+    <ul class="navbar-nav flex-column">
+      <% const isOn2 = (href) => href === '/admin' ? (path === '/admin' || path === '/admin/') : path.startsWith(href);
+         const items = [
+          ['dashboard.lihat', '/admin', 'ti-layout-dashboard', 'Dashboard'],
+          ['pembayaran.input', '/admin/bayar', 'ti-cash', 'Bayar Iuran'],
+          ['rumah.lihat', '/admin/rumah', 'ti-users', 'Data Warga'],
+          ['kebijakan.lihat', '/admin/jenis-iuran', 'ti-tags', 'Jenis Iuran'],
+          ['pengeluaran.lihat', '/admin/pengeluaran', 'ti-wallet', 'Pengeluaran'],
+          ['ledger.lihat', '/admin/ledger', 'ti-notebook', 'Buku Kas'],
+          ['laporan.lihat', '/admin/laporan', 'ti-chart-bar', 'Laporan'],
+          ['pembayaran.lihat', '/admin/pembayaran', 'ti-receipt', 'Riwayat Bayar'],
+          ['impor.kelola', '/admin/impor', 'ti-upload', 'Impor & Verifikasi'],
+          ['wa.kelola', '/admin/wa', 'ti-brand-whatsapp', 'WhatsApp'],
+          ['user.kelola', '/admin/users', 'ti-user-cog', 'Akun'],
+          ['*super', '/admin/pengaturan', 'ti-settings', 'Pengaturan'],
+         ]; %>
+      <% items.forEach(m => { if (m[0] === '*super' ? !user.isSuperAdmin : !can(m[0])) return; %>
+        <li class="nav-item"><a class="nav-link <%= isOn2(m[1]) ? 'active' : '' %>" href="<%= m[1] %>"><span class="nav-icon"><i class="ti <%= m[2] %> fs-4"></i></span> <span class="text"><%= m[3] %></span></a></li>
+      <% }) %>
+    </ul>
+  </div>
+</div>
+<% } else { %>
+  </div>
+<% } %>
 <script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/static/dasher/js/simplebar.min.js"></script>
+<script src="/static/dasher/js/sidebarnav.js"></script>
 <script src="/static/js/app.js"></script>
 </body>
 </html>

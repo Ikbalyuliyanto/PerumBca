@@ -1,113 +1,60 @@
-/* Tema admin bersih: sidebar kiri, kartu lembut, aksen hijau. */
-:root {
-  --brand: #16a34a; --brand-dark: #15803d; --brand-soft: #dcfce7;
-  --ink: #1e293b; --muted: #64748b; --line: #e8edf3; --bg: #f5f7fb; --card: #fff;
-  --side: #ffffff; --side-w: 248px; --radius: 14px;
-  --bs-body-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --bs-primary: var(--brand); --bs-primary-rgb: 22,163,74; --bs-link-color: #15803d; --bs-link-hover-color: #166534;
-}
-body { background: var(--bg); color: var(--ink); font-size: .94rem; }
-a { text-decoration: none; }
-
-/* Sidebar */
-.sidebar { position: fixed; inset: 0 auto 0 0; width: var(--side-w); background: var(--side); border-right: 1px solid var(--line); z-index: 1040; display: flex; flex-direction: column; transition: transform .2s; overflow-y: auto; }
-.brand { display: flex; align-items: center; gap: .6rem; padding: 1.1rem 1.25rem; font-weight: 700; font-size: 1.1rem; color: var(--ink); }
-.brand-logo { width: 36px; height: 36px; border-radius: 10px; background: var(--brand); color: #fff; display: grid; place-items: center; }
-.side-nav { padding: 0 .75rem 1.5rem; }
-.side-label { font-size: .7rem; letter-spacing: .08em; color: #94a3b8; font-weight: 600; padding: 1rem .75rem .35rem; }
-.side-nav a { display: flex; align-items: center; gap: .75rem; padding: .6rem .75rem; border-radius: 10px; color: #475569; font-weight: 500; margin-bottom: 2px; }
-.side-nav a i { font-size: 1.1rem; width: 1.2rem; text-align: center; }
-.side-nav a:hover { background: #f1f5f9; color: var(--ink); }
-.side-nav a.active { background: var(--brand-soft); color: var(--brand-dark); }
-.has-sidebar .main { margin-left: var(--side-w); }
-.sidebar-backdrop { display: none; }
-@media (max-width: 991.98px) {
-  .sidebar { transform: translateX(-100%); box-shadow: 0 0 40px rgba(0,0,0,.15); }
-  body.sidebar-open .sidebar { transform: none; }
-  body.sidebar-open .sidebar-backdrop { display: block; position: fixed; inset: 0; background: rgba(15,23,42,.35); z-index: 1030; }
-  .has-sidebar .main { margin-left: 0; }
-}
-
-/* Topbar & konten */
-.main { min-height: 100vh; display: flex; flex-direction: column; }
-.topbar { position: sticky; top: 0; z-index: 1020; display: flex; align-items: center; gap: .75rem; height: 64px; padding: 0 1.25rem; background: rgba(255,255,255,.9); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
-.topbar-title { font-weight: 600; font-size: 1.05rem; }
-.brand-plain { padding: 0; }
-.btn-icon { border: 0; font-size: 1.5rem; padding: 0 .25rem; }
-.user-chip { display: flex; align-items: center; gap: .5rem; border: 1px solid var(--line); border-radius: 999px; padding: .25rem .75rem .25rem .25rem; background: #fff; }
-.avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--brand-soft); color: var(--brand-dark); display: grid; place-items: center; font-weight: 700; font-size: .85rem; }
-.content { padding: 1.5rem; flex: 1; max-width: 1400px; width: 100%; }
-.no-sidebar .content { margin: 0 auto; max-width: 960px; }
-.footer { padding: 1rem 1.5rem; color: var(--muted); font-size: .8rem; }
-@media (max-width: 575.98px) { .content { padding: 1rem .75rem; } }
-
-/* Kartu & elemen */
-.card { border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 1px 2px rgba(16,24,40,.04); background: var(--card); }
-.card-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
-.card-head h2, .card-head .h6 { margin: 0; font-size: 1rem; font-weight: 600; }
-.card-body { padding: 1.25rem; }
-.page-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: 1.25rem; }
-.page-head h1 { font-size: 1.4rem; font-weight: 700; margin: 0; }
-.page-head .sub { color: var(--muted); font-size: .9rem; }
+/* Tambahan kecil di atas tema Dasher (Bootstrap 5). Layout, kartu, tabel, tombol ikut Dasher. */
+.page-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin: 1rem 0 1.5rem; }
+.page-head h1 { font-size: 1.5rem; margin: 0; }
+.page-head .sub { color: var(--bs-secondary-color); font-size: .9rem; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--bs-border-color); }
+.card-head h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+summary.card-head { list-style: none; }
 .stat { padding: 1.1rem 1.25rem; display: flex; gap: 1rem; align-items: center; }
-.stat .ico { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font-size: 1.3rem; flex: none; }
-.stat .val { font-size: 1.35rem; font-weight: 700; line-height: 1.2; }
-.stat .lbl { color: var(--muted); font-size: .82rem; }
-.ico-green { background: #dcfce7; color: #15803d; } .ico-blue { background: #dbeafe; color: #1d4ed8; }
-.ico-amber { background: #fef3c7; color: #b45309; } .ico-red { background: #fee2e2; color: #b91c1c; } .ico-violet { background: #ede9fe; color: #6d28d9; }
-.btn { border-radius: 10px; font-weight: 500; }
-.btn-brand, .btn-primary { background: var(--brand); color: #fff; border-color: var(--brand); }
-.btn-brand:hover, .btn-primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); color: #fff; }
-.form-control, .form-select { border-radius: 10px; border-color: #dbe2ea; }
-.form-control:focus, .form-select:focus { border-color: #86efac; box-shadow: 0 0 0 .2rem rgba(22,163,74,.15); }
-.table { margin: 0; }
-.table > :not(caption) > * > * { padding: .7rem .9rem; border-color: var(--line); }
-.table thead th { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; background: #f8fafc; }
-.table-sm > :not(caption) > * > * { padding: .45rem .6rem; }
-.badge { font-weight: 600; border-radius: 999px; padding: .35em .7em; }
+.stat .ico { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 1.3rem; flex: none; }
+.stat .val { font-size: 1.3rem; font-weight: 700; line-height: 1.2; }
+.stat .lbl { color: var(--bs-secondary-color); font-size: .82rem; }
+.ico-green { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.ico-blue { background: var(--bs-info-bg-subtle); color: var(--bs-info-text-emphasis); }
+.ico-amber { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.ico-red { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
+.ico-violet { background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); }
+.btn-brand { --bs-btn-color: #fff; --bs-btn-bg: var(--bs-primary); --bs-btn-border-color: var(--bs-primary); --bs-btn-hover-color: #fff; --bs-btn-hover-bg: var(--ds-primary-dark, #007867); --bs-btn-hover-border-color: var(--ds-primary-dark, #007867); }
 .money { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.alert { border-radius: 12px; border: 0; }
+.house { font-weight: 700; }
+.min-w-0 { min-width: 0; }
 
-/* Status pil */
+/* Status */
 .pill { display: inline-flex; align-items: center; gap: .3rem; font-size: .75rem; font-weight: 600; padding: .25rem .6rem; border-radius: 999px; white-space: nowrap; }
-.pill-LUNAS { background: #dcfce7; color: #15803d; } .pill-BELUM { background: #fee2e2; color: #b91c1c; }
-.pill-SEBAGIAN { background: #fef3c7; color: #b45309; } .pill-BEBAS { background: #f1f5f9; color: #94a3b8; } .pill-SHEET { background: #e0f2fe; color: #0369a1; }
+.pill-LUNAS { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.pill-BELUM { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
+.pill-SEBAGIAN { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.pill-BEBAS { background: var(--bs-tertiary-bg); color: var(--bs-secondary-color); }
+.pill-SHEET { background: var(--bs-info-bg-subtle); color: var(--bs-info-text-emphasis); }
 
-/* Kondisi rumah (legenda sheet) */
+/* Kondisi rumah (legenda sheet lama) */
 .kondisi-AKTIF { background: #f3d9c4; } .kondisi-KOSONG { background: #f5b7b1; }
 .kondisi-TIDAK_DITEMPATI { background: #aed6f1; } .kondisi-PIHAK_KEDUA { background: #fcf3a1; }
 .badge.kondisi-AKTIF, .badge.kondisi-KOSONG, .badge.kondisi-TIDAK_DITEMPATI, .badge.kondisi-PIHAK_KEDUA { color: #333; }
 
-/* Grid centang bayar */
+/* Navigasi bulan */
+.month-nav { display: inline-flex; align-items: center; gap: .25rem; background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: .75rem; padding: .2rem; }
+.month-nav a, .month-nav span { padding: .35rem .7rem; border-radius: .6rem; color: var(--bs-body-color); text-decoration: none; }
+.month-nav a:hover { background: var(--bs-tertiary-bg); }
+.month-nav span { font-weight: 600; min-width: 140px; text-align: center; }
+
+/* Grid centang bayar sebagian */
 .pay-grid th, .pay-grid td { text-align: center; }
 .pay-grid td:first-child, .pay-grid th:first-child { text-align: left; }
 .chk { position: relative; display: inline-block; }
 .chk input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
-.chk span { display: inline-grid; place-items: center; min-width: 88px; padding: .4rem .5rem; border-radius: 10px; border: 1.5px dashed #cbd5e1; color: var(--muted); font-size: .8rem; font-weight: 600; transition: all .12s; }
-.chk input:checked + span { border: 1.5px solid var(--brand); background: var(--brand-soft); color: var(--brand-dark); }
-.chk input:focus-visible + span { outline: 2px solid #86efac; }
-.cell-done { display: inline-grid; place-items: center; min-width: 88px; padding: .4rem .5rem; border-radius: 10px; font-size: .8rem; font-weight: 600; }
-.cell-done.LUNAS { background: #dcfce7; color: #15803d; } .cell-done.SHEET { background: #e0f2fe; color: #0369a1; } .cell-done.BEBAS { color: #cbd5e1; }
-.sticky-bar { position: sticky; bottom: 0; background: #fff; border-top: 1px solid var(--line); padding: .85rem 1.25rem; display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between; border-radius: 0 0 var(--radius) var(--radius); z-index: 5; }
-.total-big { font-size: 1.3rem; font-weight: 700; color: var(--brand-dark); }
-.month-nav { display: inline-flex; align-items: center; gap: .25rem; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: .2rem; }
-.month-nav a, .month-nav span { padding: .35rem .7rem; border-radius: 9px; color: var(--ink); }
-.month-nav a:hover { background: #f1f5f9; }
-.month-nav span { font-weight: 600; min-width: 140px; text-align: center; }
-.house { font-weight: 700; }
-.list-row-muted { color: #94a3b8; }
+.chk span { display: inline-grid; place-items: center; min-width: 88px; padding: .4rem .5rem; border-radius: .6rem; border: 1.5px dashed var(--bs-border-color); color: var(--bs-secondary-color); font-size: .8rem; font-weight: 600; }
+.chk input:checked + span { border: 1.5px solid var(--bs-primary); background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); }
+.chk input:focus-visible + span { outline: 2px solid var(--bs-primary); }
+.cell-done { display: inline-grid; place-items: center; min-width: 88px; padding: .4rem .5rem; border-radius: .6rem; font-size: .8rem; font-weight: 600; }
+.cell-done.LUNAS { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.cell-done.SHEET { background: var(--bs-info-bg-subtle); color: var(--bs-info-text-emphasis); }
+.cell-done.BEBAS { color: var(--bs-secondary-color); }
+.sticky-bar { position: sticky; bottom: 0; background: var(--bs-body-bg); border-top: 1px solid var(--bs-border-color); padding: .85rem 1.25rem; display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between; z-index: 5; }
+.total-big { font-size: 1.3rem; font-weight: 700; color: var(--bs-primary); }
 
 .bulan-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2px; font-size: .7rem; text-align: center; }
-.bulan-grid span { padding: 2px 0; border-radius: 4px; background: #e9ecef; }
-.bulan-grid span.ok { background: #a3d9a5; }
-@media print { .sidebar, .topbar, .footer, .no-print { display: none !important; } .has-sidebar .main { margin: 0; } body { background: #fff; } .card { box-shadow: none; border: 0; } }
+.bulan-grid span { padding: 2px 0; border-radius: 4px; background: var(--bs-tertiary-bg); }
+.bulan-grid span.ok { background: var(--bs-success-bg-subtle); }
 
-/* Kartu rumah ringkas di halaman Bayar */
-.house-card { flex-direction: row; display: flex; align-items: center; gap: .75rem; padding: .65rem .85rem; }
-.house-chk { flex: none; width: 1.2em; height: 1.2em; margin: 0; }
-.min-w-0 { min-width: 0; }
-.mark { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; font-size: .8rem; font-weight: 700; cursor: help; }
-.mark-LUNAS { background: #dcfce7; color: #15803d; }
-.mark-BELUM { background: #fee2e2; color: #b91c1c; }
-.mark-SEBAGIAN { background: #fef3c7; color: #b45309; }
-.mark-BEBAS { background: #f1f5f9; color: #94a3b8; }
+@media print { #miniSidebar, .navbar-glass, footer, .no-print { display: none !important; } #content { margin: 0 !important; } .card { box-shadow: none; } }
